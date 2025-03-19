@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
 
 /// set up a simple 3D scene
@@ -11,6 +12,8 @@ pub fn setup_map(
         Mesh3d(meshes.add(Circle::new(20.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
         Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+        RigidBody::Static,
+        Collider::cuboid(20.0, 20.0, 1.0),
     ));
     // cube
     commands.spawn((

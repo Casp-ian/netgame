@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
 
 pub mod content;
@@ -9,6 +10,7 @@ fn main() {
     App::new()
         // plugins
         .add_plugins(DefaultPlugins)
+        .add_plugins(PhysicsPlugins::default())
         .add_plugins(ContentPlugin)
         .add_plugins(WorksPlugin)
         // systems
