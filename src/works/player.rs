@@ -5,7 +5,7 @@ use bevy::{input::mouse::MouseMotion, prelude::*};
 pub struct Player;
 
 #[derive(Component)]
-#[require(Transform, Camera3d)]
+#[require(Transform)]
 pub struct Head;
 
 pub fn move_player(
@@ -51,4 +51,32 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
         let left = t.left().fast_renormalize();
         t.rotate_axis(left, delta.y * sens);
     }
+}
+
+pub fn spawn_player(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let player = (
+        Mesh3d(meshes.add(Cuboid::new(0.5, 0.5, 0.5))),
+        MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+        Player,
+        Transform::from_xyz(-2.5, 4.5, 9.0),
+        // Visibility::,
+    );
+
+    let head = (
+        Head,
+        Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Visibility::Hidden,
+    );
+
+    let camera = (Camera3d::default(), Transform::from_xyz(0.0, 0.0, 2.0));
+
+    commands.spawn(player).with_children(|parent| {
+        parent.spawn(head).with_children(|parent| {
+            parent.spawn(camera);
+        });
+    });
 }

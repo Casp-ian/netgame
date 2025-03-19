@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::works::player::{Head, Player};
-
 /// set up a simple 3D scene
 pub fn setup_map(
     mut commands: Commands,
@@ -28,16 +26,4 @@ pub fn setup_map(
         },
         Transform::from_xyz(4.0, 8.0, 4.0),
     ));
-    // camera
-    commands
-        .spawn((
-            Player,
-            Transform::from_xyz(-2.5, 4.5, 9.0),
-            Visibility::Hidden,
-        ))
-        .with_child((
-            Head,
-            Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-            Visibility::Hidden,
-        ));
 }
