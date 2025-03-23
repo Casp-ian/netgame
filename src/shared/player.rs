@@ -17,6 +17,15 @@ pub struct Player {
 #[require(Transform)]
 pub struct Head;
 
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, spawn_player)
+            .add_systems(Update, (move_player, move_camera));
+    }
+}
+
 pub fn move_player(
     // time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -51,20 +60,11 @@ pub fn move_player(
     let adjustment = 2.5;
     let dampening = 0.8;
 
+    let ground_friction = 0.9;
+
     let mut height = 100.0;
     if let Some(x) = hits.iter().next() {
         height = x.distance;
-    }
-
-    // grounded state
-    if height > grounded - grounded_pad && height < grounded + grounded_pad {
-        player.state = PlayerState::Grounded;
-        let diff = (height - grounded) / -grounded_pad;
-
-        linear.y += diff * adjustment;
-        linear.y *= dampening; // TODO this should be delta timed
-    } else {
-        player.state = PlayerState::Aerial;
     }
 
     whish = rotation.mul_vec3(whish);
@@ -79,6 +79,20 @@ pub fn move_player(
 
     linear.x += whish.x * speed;
     linear.z += whish.z * speed;
+
+    // grounded state
+    if height > grounded - grounded_pad && height < grounded + grounded_pad {
+        player.state = PlayerState::Grounded;
+        let diff = (height - grounded) / -grounded_pad;
+
+        linear.y += diff * adjustment;
+        linear.y *= dampening; // TODO this should be delta timed
+
+        linear.x *= ground_friction;
+        linear.z *= ground_friction;
+    } else {
+        player.state = PlayerState::Aerial;
+    }
 
     if jump && player.state == PlayerState::Grounded {
         linear.y = jump_height;
@@ -122,7 +136,9 @@ pub fn spawn_player(
         Transform::from_xyz(-2.5, 4.5, 9.0),
         RigidBody::Dynamic,
         // GravityScale(0.0),
-        Friction::new(0.0),
+        // Friction::new(0.0)
+        //     .with_dynamic_coefficient(0.0)
+        //     .with_static_coefficient(0.0),
         Collider::capsule(0.25, 0.1),
         LockedAxes::new()
             .lock_rotation_x()

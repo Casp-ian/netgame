@@ -1,6 +1,14 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
+pub struct MapPlugin;
+
+impl Plugin for MapPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_map);
+    }
+}
+
 /// set up a simple 3D scene
 pub fn setup_map(
     mut commands: Commands,
