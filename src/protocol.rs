@@ -1,21 +1,38 @@
+use avian3d::prelude::{AngularVelocity, LinearVelocity};
 use bevy::{app::Plugin, prelude::*};
+use client::ComponentSyncMode;
 use serde::{Deserialize, Serialize};
 
-use lightyear::prelude::{client::ComponentSyncMode, *};
+use lightyear::prelude::*;
+
+use crate::shared;
 
 pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        app.register_message::<ChatMessage>(ChannelDirection::Bidirectional);
+
         app.register_component::<PlayerId>(ChannelDirection::ServerToClient)
             .add_prediction(ComponentSyncMode::Once)
             .add_interpolation(ComponentSyncMode::Once);
 
-        // app.register_component::<Camera3d>(ChannelDirection::ClientToServer);
+        app.register_component::<Transform>(ChannelDirection::ServerToClient)
+            .add_prediction(ComponentSyncMode::Full);
 
-        app.register_message::<ChatMessage>(ChannelDirection::Bidirectional);
+        app.register_component::<LinearVelocity>(ChannelDirection::ServerToClient)
+            .add_prediction(ComponentSyncMode::Full);
 
-        // app.add_plugins(InputManagerPlugin::<Inputs>::default());
+        app.register_component::<AngularVelocity>(ChannelDirection::ServerToClient)
+            .add_prediction(ComponentSyncMode::Full);
+
+        app.register_component::<shared::player::Player>(ChannelDirection::ServerToClient);
+        app.register_component::<shared::player::Head>(ChannelDirection::ServerToClient);
+
+        app.add_channel::<ChatChannel>(ChannelSettings {
+            mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
+            ..default()
+        });
     }
 }
 
@@ -26,12 +43,17 @@ pub struct PlayerId {
     id: u32,
 }
 
+// CHANNELS -----------------------------------------------------------------------------------------
+
+#[derive(Channel)]
+pub struct ChatChannel;
+
 // MESSAGES -----------------------------------------------------------------------------------------
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ChatMessage {
-    sender: u32,
-    text: String,
+    pub sender: u32,
+    pub text: String,
 }
 
 // INPUTS -------------------------------------------------------------------------------------------

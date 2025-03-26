@@ -26,26 +26,10 @@ fn main() {
     // compile_error!("cant have both client and server features at the same time");
 
     let mut app = App::new();
-    app
-        // Makes the server/client update continuously even while unfocused.
-        .insert_resource(WinitSettings {
-            focused_mode: Continuous,
-            unfocused_mode: Continuous,
-        })
-        .add_plugins((
-            DefaultPlugins,
-            PlayerPlugin,
-            MapPlugin,
-            SharedPlugin {
-                config: shared::shared_config(),
-            },
-            ProtocolPlugin,
-            PhysicsPlugins::default(),
-        ));
 
     #[cfg(feature = "client")]
     app.add_plugins((
-        client::ClientNetworkPlugin,
+        client::ClientPlugins,
         // DefaultPlugins,
     ));
 
@@ -56,6 +40,21 @@ fn main() {
         // StatesPlugin,
         // LogPlugin::default(),
     ));
+
+    app
+        // Makes the server/client update continuously even while unfocused.
+        .add_plugins((
+            DefaultPlugins,
+            ProtocolPlugin,
+            PhysicsPlugins::default(),
+            PlayerPlugin,
+            MapPlugin,
+        ));
+
+    app.insert_resource(WinitSettings {
+        focused_mode: Continuous,
+        unfocused_mode: Continuous,
+    });
 
     app.run();
 }

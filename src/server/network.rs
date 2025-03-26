@@ -1,11 +1,9 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 use config::ServerConfig;
 use lightyear::{
     prelude::{
         ReplicationConfig,
-        server::{IoConfig, NetConfig, ServerCommands, ServerTransport},
+        server::{IoConfig, NetConfig, ServerCommandsExt, ServerTransport},
     },
     server::{config::NetcodeConfig, plugin::ServerPlugins, *},
 };
@@ -45,10 +43,8 @@ fn build_server_plugin() -> ServerPlugins {
         // we can specify multiple net configs here, and the server will listen on all of them
         // at the same time. Here we will only use one
         net: vec![net_config],
-        replication: ReplicationConfig {
-            send_interval: Duration::from_millis(100),
-            ..default()
-        },
+        // TODO specify config if needed
+        replication: ReplicationConfig { ..default() },
         ..default()
     };
     ServerPlugins::new(config)

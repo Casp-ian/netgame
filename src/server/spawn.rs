@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
 
-use crate::shared::player::{Head, PlayerBundle};
+use crate::{
+    ChatChannel,
+    protocol::ChatMessage,
+    shared::player::{Head, PlayerBundle},
+};
 
 pub struct SpawnPlugin;
 
@@ -12,10 +16,12 @@ impl Plugin for SpawnPlugin {
 }
 
 fn handle_connections(
+    mut connection_manager: ResMut<lightyear::prelude::server::ConnectionManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     // Here we listen for the `ConnectEvent` event
     mut connections: EventReader<ServerConnectEvent>,
+    // mut messages: EventReader<MessageEvent<ChatMessage>>,
     // mut global: ResMut<Global>,
     mut commands: Commands,
 ) {
@@ -24,6 +30,15 @@ fn handle_connections(
         let client_id = connection.client_id;
 
         eprintln!("OOOOH!!! {}", client_id);
+        connection_manager
+            .send_message_to_target::<ChatChannel, ChatMessage>(
+                &ChatMessage {
+                    sender: 0,
+                    text: "Fuck".to_string(),
+                },
+                NetworkTarget::All,
+            )
+            .unwrap();
 
         // We add the `Replicate` bundle to start replicating the entity to clients
         // By default, the entity will be replicated to all clients

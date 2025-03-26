@@ -1,19 +1,20 @@
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseMotion, prelude::*};
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 pub enum PlayerState {
     Grounded,
     Aerial,
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq, Serialize, Deserialize)]
 #[require(Transform)]
 pub struct Player {
     state: PlayerState,
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq, Serialize, Deserialize)]
 #[require(Transform)]
 pub struct Head;
 
@@ -121,6 +122,7 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
     let sens = 0.01;
 
     for mut t in &mut q {
+        eprintln!("A");
         t.rotate_axis(Dir3::Y, delta.x * -sens);
         // as this is approximate, it might fuck up
         let left = t.left().fast_renormalize();
