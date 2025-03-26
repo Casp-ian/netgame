@@ -21,7 +21,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
+        app
+            // .add_systems(Startup, spawn_player)
             .add_systems(Update, (move_player, move_camera));
     }
 }
@@ -50,6 +51,10 @@ pub fn move_player(
 
     if keys.pressed(KeyCode::Space) {
         jump = true;
+    }
+
+    if qp.is_empty() || qc.is_empty() {
+        return;
     }
 
     let (mut linear, hits, mut player) = qp.single_mut();
@@ -95,6 +100,7 @@ pub fn move_player(
     }
 
     if jump && player.state == PlayerState::Grounded {
+        eprintln!("jump!");
         linear.y = jump_height;
     }
 
@@ -122,56 +128,99 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
     }
 }
 
-pub fn spawn_player(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let player = (
-        Player {
-            state: PlayerState::Grounded,
-        },
-        Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-        Transform::from_xyz(-2.5, 4.5, 9.0),
-        RigidBody::Dynamic,
-        // GravityScale(0.0),
-        // Friction::new(0.0)
-        //     .with_dynamic_coefficient(0.0)
-        //     .with_static_coefficient(0.0),
-        Collider::capsule(0.25, 0.1),
-        LockedAxes::new()
-            .lock_rotation_x()
-            .lock_rotation_y()
-            .lock_rotation_z(),
-        Visibility::Visible,
-        ShapeCaster::new(
-            Collider::sphere(0.2), // Shape
-            Vec3::ZERO,            // Origin
-            Quat::default(),       // Shape rotation
-            Dir3::X,               // Direction
-        )
-        .with_max_hits(1)
-        .with_ignore_origin_penetration(true)
-        .with_max_distance(100.0)
-        .with_direction(Dir3::NEG_Y),
-    );
-
-    let head = (
-        Head,
-        Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-        Visibility::Visible,
-    );
-
-    let camera = (
-        Camera3d::default(),
-        Transform::from_xyz(0.0, 1.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
-        Visibility::Visible,
-    );
-
-    commands.spawn(player).with_children(|parent| {
-        parent.spawn(head).with_children(|parent| {
-            parent.spawn(camera);
-        });
-    });
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    pub player: Player,
+    pub mesh3d: Mesh3d,
+    pub mesh_material3d: MeshMaterial3d<StandardMaterial>,
+    pub transform: Transform,
+    pub rigid_body: RigidBody,
+    pub collider: Collider,
+    pub locked_axes: LockedAxes,
+    pub visibility: Visibility,
+    pub shape_caster: ShapeCaster,
 }
+
+// TODO i would make a scene out of this instead of a bundle
+impl Default for PlayerBundle {
+    fn default() -> Self {
+        Self {
+            player: Player {
+                state: PlayerState::Grounded,
+            },
+
+            mesh3d: Mesh3d::default(),
+            mesh_material3d: MeshMaterial3d::default(),
+
+            transform: Transform::from_xyz(0.0, 5.0, 0.0),
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::capsule(0.25, 0.1),
+            locked_axes: LockedAxes::ROTATION_LOCKED,
+            visibility: Visibility::Visible,
+            shape_caster: ShapeCaster::new(
+                Collider::sphere(0.2), // Shape
+                Vec3::ZERO,            // Origin
+                Quat::default(),       // Shape rotation
+                Dir3::X,               // Direction
+            )
+            .with_max_hits(1)
+            .with_ignore_origin_penetration(true)
+            .with_max_distance(100.0)
+            .with_direction(Dir3::NEG_Y),
+        }
+    }
+}
+
+// pub fn spawn_player(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<StandardMaterial>>,
+// ) {
+//     let player = (
+//         Player {
+//             state: PlayerState::Grounded,
+//         },
+//         Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
+//         MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+//         Transform::from_xyz(-2.5, 4.5, 9.0),
+//         RigidBody::Dynamic,
+//         // GravityScale(0.0),
+//         // Friction::new(0.0)
+//         //     .with_dynamic_coefficient(0.0)
+//         //     .with_static_coefficient(0.0),
+//         Collider::capsule(0.25, 0.1),
+//         LockedAxes::new()
+//             .lock_rotation_x()
+//             .lock_rotation_y()
+//             .lock_rotation_z(),
+//         Visibility::Visible,
+//         ShapeCaster::new(
+//             Collider::sphere(0.2), // Shape
+//             Vec3::ZERO,            // Origin
+//             Quat::default(),       // Shape rotation
+//             Dir3::X,               // Direction
+//         )
+//         .with_max_hits(1)
+//         .with_ignore_origin_penetration(true)
+//         .with_max_distance(100.0)
+//         .with_direction(Dir3::NEG_Y),
+//     );
+
+//     let head = (
+//         Head,
+//         Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+//         Visibility::Visible,
+//     );
+
+//     let camera = (
+//         Camera3d::default(),
+//         Transform::from_xyz(0.0, 1.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
+//         Visibility::Visible,
+//     );
+
+//     commands.spawn(player).with_children(|parent| {
+//         parent.spawn(head).with_children(|parent| {
+//             parent.spawn(camera);
+//         });
+//     });
+// }
