@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
+use server::ReplicationTarget;
 
 use crate::{
     ChatChannel,
@@ -17,24 +18,43 @@ impl Plugin for SpawnPlugin {
 
 fn handle_connections(
     mut connection_manager: ResMut<lightyear::prelude::server::ConnectionManager>,
+    mut connections: EventReader<ServerConnectEvent>,
+
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    // Here we listen for the `ConnectEvent` event
-    mut connections: EventReader<ServerConnectEvent>,
-    // mut messages: EventReader<MessageEvent<ChatMessage>>,
-    // mut global: ResMut<Global>,
+
     mut commands: Commands,
 ) {
     for connection in connections.read() {
         // on the server, the `context()` method returns the `ClientId` of the client that connected
         let client_id = connection.client_id;
 
-        eprintln!("OOOOH!!! {}", client_id);
+        let replicate = ServerReplicate {
+            // target: ReplicationTarget {
+            //     target: NetworkTarget::All,
+            // },
+            // authority: server::AuthorityPeer::Client(client_id),
+            sync: server::SyncTarget {
+                prediction: NetworkTarget::All,
+                interpolation: NetworkTarget::All,
+            },
+            // relevance_mode: NetworkRelevanceMode::All,
+            controlled_by: server::ControlledBy {
+                target: NetworkTarget::Single(client_id),
+                lifetime: server::Lifetime::SessionBased,
+            },
+            // group: todo!(),
+            hierarchy: ReplicateHierarchy {
+                enabled: true,
+                recursive: true,
+            },
+            ..default()
+        };
+
         connection_manager
             .send_message_to_target::<ChatChannel, ChatMessage>(
                 &ChatMessage {
-                    sender: 0,
-                    text: "Fuck".to_string(),
+                    text: "[Server]: New player joined".to_string(),
                 },
                 NetworkTarget::All,
             )
@@ -43,6 +63,7 @@ fn handle_connections(
         // We add the `Replicate` bundle to start replicating the entity to clients
         // By default, the entity will be replicated to all clients
         let player = PlayerBundle {
+            player_id: crate::PlayerId { id: client_id },
             mesh3d: Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
             mesh_material3d: MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             ..Default::default()
@@ -60,13 +81,11 @@ fn handle_connections(
             Visibility::Visible,
         );
 
-        commands
-            .spawn((player, Replicating))
-            .with_children(|parent| {
-                parent.spawn((head, Replicating)).with_children(|parent| {
-                    parent.spawn((camera, Replicating));
-                });
+        commands.spawn((player, replicate)).with_children(|parent| {
+            parent.spawn(head).with_children(|parent| {
+                // parent.spawn(camera);
             });
+        });
 
         // Add a mapping from client id to entity id
         // global.client_id_to_entity_id.insert(client_id, entity.id());

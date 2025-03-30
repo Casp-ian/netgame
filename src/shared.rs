@@ -1,3 +1,4 @@
+use bevy::prelude::*;
 use lightyear::prelude::{SharedConfig, TickConfig};
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -12,9 +13,16 @@ pub const TICK_DURATION: Duration = Duration::from_millis(1000 / 64);
 pub const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 4000);
 pub const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 5000);
 
+pub struct SharedPlugins;
+
+impl Plugin for SharedPlugins {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_plugins((map::MapPlugin, player::PlayerPlugin));
+    }
+}
+
 pub fn shared_config() -> SharedConfig {
     SharedConfig {
-        // send an update every 100ms
         server_replication_send_interval: REPLICATION_INTERVAL,
         client_replication_send_interval: REPLICATION_INTERVAL,
         tick: TickConfig {

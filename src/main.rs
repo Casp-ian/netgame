@@ -6,8 +6,6 @@ use bevy::{
     winit::{UpdateMode::Continuous, WinitSettings},
 };
 
-use lightyear::prelude::*;
-
 mod protocol;
 use protocol::*;
 
@@ -17,8 +15,7 @@ mod client;
 mod server;
 
 mod shared;
-use shared::map::MapPlugin;
-use shared::player::PlayerPlugin;
+use shared::SharedPlugins;
 
 fn main() {
     #[cfg(all(feature = "client", feature = "server"))]
@@ -47,8 +44,7 @@ fn main() {
             DefaultPlugins,
             ProtocolPlugin,
             PhysicsPlugins::default(),
-            PlayerPlugin,
-            MapPlugin,
+            SharedPlugins,
         ));
 
     app.insert_resource(WinitSettings {

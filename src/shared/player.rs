@@ -2,6 +2,8 @@ use avian3d::prelude::*;
 use bevy::{input::mouse::MouseMotion, prelude::*};
 use serde::{Deserialize, Serialize};
 
+use crate::protocol::{Controller, PlayerId};
+
 #[derive(PartialEq, Serialize, Deserialize)]
 pub enum PlayerState {
     Grounded,
@@ -11,7 +13,7 @@ pub enum PlayerState {
 #[derive(Component, PartialEq, Serialize, Deserialize)]
 #[require(Transform)]
 pub struct Player {
-    state: PlayerState,
+    pub state: PlayerState,
 }
 
 #[derive(Component, PartialEq, Serialize, Deserialize)]
@@ -22,44 +24,76 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            // .add_systems(Startup, spawn_player)
+        app.add_systems(PreUpdate, controller)
             .add_systems(Update, (move_player, move_camera));
     }
 }
 
-pub fn move_player(
-    // time: Res<Time>,
+pub fn controller(
     keys: Res<ButtonInput<KeyCode>>,
-    mut qp: Query<(&mut LinearVelocity, &ShapeHits, &mut Player), Without<Head>>,
-    qc: Query<&Transform, (With<Head>, Without<Player>)>,
+    mut qp: Query<&mut Controller, Without<Head>>,
+    qc: Query<&Transform, With<Head>>,
 ) {
-    let mut whish: Vec3 = Vec3::ZERO;
-    let mut jump = false;
-
-    if keys.pressed(KeyCode::KeyW) {
-        whish -= Vec3::Z;
-    }
-    if keys.pressed(KeyCode::KeyA) {
-        whish -= Vec3::X;
-    }
-    if keys.pressed(KeyCode::KeyS) {
-        whish += Vec3::Z;
-    }
-    if keys.pressed(KeyCode::KeyD) {
-        whish += Vec3::X;
-    }
-
-    if keys.pressed(KeyCode::Space) {
-        jump = true;
-    }
-
-    if qp.is_empty() || qc.is_empty() {
+    if qp.is_empty() {
+        info!("returned early, qp");
         return;
     }
 
-    let (mut linear, hits, mut player) = qp.single_mut();
-    let rotation = qc.single().rotation;
+    if qc.is_empty() {
+        info!("returned early, cq");
+        return;
+    }
+
+    let rotation = qc.iter().next().unwrap().rotation.to_euler(EulerRot::XYZ).1;
+    let mut controller = qp.iter_mut().next().unwrap();
+
+    let mut whish: Vec2 = Vec2::ZERO;
+
+    if keys.pressed(KeyCode::KeyW) {
+        whish -= Vec2::Y;
+    }
+    if keys.pressed(KeyCode::KeyA) {
+        whish -= Vec2::X;
+    }
+    if keys.pressed(KeyCode::KeyS) {
+        whish += Vec2::Y;
+    }
+    if keys.pressed(KeyCode::KeyD) {
+        whish += Vec2::X;
+    }
+
+    if keys.pressed(KeyCode::Space) {
+        info!("Jump!!");
+        controller.jump = true;
+    } else {
+        controller.jump = false;
+    }
+
+    let sin = rotation.sin();
+    let cos = rotation.cos();
+
+    // whish = rotation.mul_vec3(whish);
+    // whish.y = 0.0;
+
+    // whish = whish.normalize_or_zero();
+
+    let rotated: Vec2 = Vec2::new(
+        (whish.x * sin) + (whish.y * cos),
+        (whish.y * sin) + (whish.x * cos),
+    );
+
+    controller.whish_dir = rotated;
+}
+
+pub fn move_player(
+    // time: Res<Time>,
+    mut qp: Query<(&Controller, &mut LinearVelocity, &ShapeHits, &mut Player), Without<Head>>,
+) {
+    if qp.is_empty() {
+        return;
+    }
+
+    let (controller, mut linear, hits, mut player) = qp.single_mut();
 
     let grounded = 0.5;
     let grounded_pad = 0.6;
@@ -73,18 +107,13 @@ pub fn move_player(
         height = x.distance;
     }
 
-    whish = rotation.mul_vec3(whish);
-    whish.y = 0.0;
-
-    whish = whish.normalize_or_zero();
-
     let speed = 1.0;
     let gravity = -9.8;
     let jump_height = 10.0;
     let max_fall = gravity * 2.0;
 
-    linear.x += whish.x * speed;
-    linear.z += whish.z * speed;
+    linear.x += controller.whish_dir.x * speed;
+    linear.z += controller.whish_dir.y * speed;
 
     // grounded state
     if height > grounded - grounded_pad && height < grounded + grounded_pad {
@@ -100,8 +129,7 @@ pub fn move_player(
         player.state = PlayerState::Aerial;
     }
 
-    if jump && player.state == PlayerState::Grounded {
-        eprintln!("jump!");
+    if controller.jump && player.state == PlayerState::Grounded {
         linear.y = jump_height;
     }
 
@@ -122,7 +150,6 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
     let sens = 0.01;
 
     for mut t in &mut q {
-        eprintln!("A");
         t.rotate_axis(Dir3::Y, delta.x * -sens);
         // as this is approximate, it might fuck up
         let left = t.left().fast_renormalize();
@@ -133,6 +160,8 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub player: Player,
+    pub player_id: PlayerId,
+    pub controller: Controller,
     pub mesh3d: Mesh3d,
     pub mesh_material3d: MeshMaterial3d<StandardMaterial>,
     pub transform: Transform,
@@ -149,6 +178,13 @@ impl Default for PlayerBundle {
         Self {
             player: Player {
                 state: PlayerState::Grounded,
+            },
+            player_id: PlayerId {
+                id: lightyear::prelude::ClientId::Local(0),
+            },
+            controller: Controller {
+                whish_dir: Vec2::ZERO,
+                jump: false,
             },
 
             mesh3d: Mesh3d::default(),
