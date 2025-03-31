@@ -1,8 +1,9 @@
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseMotion, prelude::*};
+use leafwing_input_manager::prelude::{ActionState, InputMap, VirtualDPad};
 use serde::{Deserialize, Serialize};
 
-use crate::protocol::{Controller, PlayerId};
+use crate::protocol::{component::PlayerId, input::NetworkedInput};
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub enum PlayerState {
@@ -24,76 +25,29 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, controller)
-            .add_systems(Update, (move_player, move_camera));
+        app.add_systems(FixedUpdate, move_player)
+            .add_systems(Update, move_camera);
     }
-}
-
-pub fn controller(
-    keys: Res<ButtonInput<KeyCode>>,
-    mut qp: Query<&mut Controller, Without<Head>>,
-    qc: Query<&Transform, With<Head>>,
-) {
-    if qp.is_empty() {
-        info!("returned early, qp");
-        return;
-    }
-
-    if qc.is_empty() {
-        info!("returned early, cq");
-        return;
-    }
-
-    let rotation = qc.iter().next().unwrap().rotation.to_euler(EulerRot::XYZ).1;
-    let mut controller = qp.iter_mut().next().unwrap();
-
-    let mut whish: Vec2 = Vec2::ZERO;
-
-    if keys.pressed(KeyCode::KeyW) {
-        whish -= Vec2::Y;
-    }
-    if keys.pressed(KeyCode::KeyA) {
-        whish -= Vec2::X;
-    }
-    if keys.pressed(KeyCode::KeyS) {
-        whish += Vec2::Y;
-    }
-    if keys.pressed(KeyCode::KeyD) {
-        whish += Vec2::X;
-    }
-
-    if keys.pressed(KeyCode::Space) {
-        info!("Jump!!");
-        controller.jump = true;
-    } else {
-        controller.jump = false;
-    }
-
-    let sin = rotation.sin();
-    let cos = rotation.cos();
-
-    // whish = rotation.mul_vec3(whish);
-    // whish.y = 0.0;
-
-    // whish = whish.normalize_or_zero();
-
-    let rotated: Vec2 = Vec2::new(
-        (whish.x * sin) + (whish.y * cos),
-        (whish.y * sin) + (whish.x * cos),
-    );
-
-    controller.whish_dir = rotated;
 }
 
 pub fn move_player(
     // time: Res<Time>,
-    mut qp: Query<(&Controller, &mut LinearVelocity, &ShapeHits, &mut Player), Without<Head>>,
+    mut qp: Query<
+        (
+            &ActionState<NetworkedInput>,
+            &mut LinearVelocity,
+            &ShapeHits,
+            &mut Player,
+        ),
+        Without<Head>,
+    >,
 ) {
     if qp.is_empty() {
+        // info!("B");
         return;
     }
 
-    let (controller, mut linear, hits, mut player) = qp.single_mut();
+    let (action, mut linear, hits, mut player) = qp.single_mut();
 
     let grounded = 0.5;
     let grounded_pad = 0.6;
@@ -112,8 +66,24 @@ pub fn move_player(
     let jump_height = 10.0;
     let max_fall = gravity * 2.0;
 
-    linear.x += controller.whish_dir.x * speed;
-    linear.z += controller.whish_dir.y * speed;
+    let axis;
+    if let Some(test) = action.dual_axis_data(&NetworkedInput::Move) {
+        axis = test.pair;
+    } else {
+        axis = Vec2::ZERO;
+    }
+
+    let jump;
+    if let Some(test) = action.button_data(&NetworkedInput::Jump) {
+        jump = test.state.pressed();
+    } else {
+        jump = false;
+    }
+
+    linear.x += axis.x * speed;
+    linear.z += axis.y * speed;
+
+    // info!("{:?}", linear);
 
     // grounded state
     if height > grounded - grounded_pad && height < grounded + grounded_pad {
@@ -129,7 +99,7 @@ pub fn move_player(
         player.state = PlayerState::Aerial;
     }
 
-    if controller.jump && player.state == PlayerState::Grounded {
+    if jump && player.state == PlayerState::Grounded {
         linear.y = jump_height;
     }
 
@@ -161,7 +131,7 @@ pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Trans
 pub struct PlayerBundle {
     pub player: Player,
     pub player_id: PlayerId,
-    pub controller: Controller,
+    pub input: InputMap<NetworkedInput>,
     pub mesh3d: Mesh3d,
     pub mesh_material3d: MeshMaterial3d<StandardMaterial>,
     pub transform: Transform,
@@ -182,10 +152,9 @@ impl Default for PlayerBundle {
             player_id: PlayerId {
                 id: lightyear::prelude::ClientId::Local(0),
             },
-            controller: Controller {
-                whish_dir: Vec2::ZERO,
-                jump: false,
-            },
+
+            input: InputMap::new([(NetworkedInput::Jump, KeyCode::Space)])
+                .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd()),
 
             mesh3d: Mesh3d::default(),
             mesh_material3d: MeshMaterial3d::default(),
@@ -208,57 +177,3 @@ impl Default for PlayerBundle {
         }
     }
 }
-
-// pub fn spawn_player(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<StandardMaterial>>,
-// ) {
-//     let player = (
-//         Player {
-//             state: PlayerState::Grounded,
-//         },
-//         Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
-//         MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-//         Transform::from_xyz(-2.5, 4.5, 9.0),
-//         RigidBody::Dynamic,
-//         // GravityScale(0.0),
-//         // Friction::new(0.0)
-//         //     .with_dynamic_coefficient(0.0)
-//         //     .with_static_coefficient(0.0),
-//         Collider::capsule(0.25, 0.1),
-//         LockedAxes::new()
-//             .lock_rotation_x()
-//             .lock_rotation_y()
-//             .lock_rotation_z(),
-//         Visibility::Visible,
-//         ShapeCaster::new(
-//             Collider::sphere(0.2), // Shape
-//             Vec3::ZERO,            // Origin
-//             Quat::default(),       // Shape rotation
-//             Dir3::X,               // Direction
-//         )
-//         .with_max_hits(1)
-//         .with_ignore_origin_penetration(true)
-//         .with_max_distance(100.0)
-//         .with_direction(Dir3::NEG_Y),
-//     );
-
-//     let head = (
-//         Head,
-//         Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-//         Visibility::Visible,
-//     );
-
-//     let camera = (
-//         Camera3d::default(),
-//         Transform::from_xyz(0.0, 1.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
-//         Visibility::Visible,
-//     );
-
-//     commands.spawn(player).with_children(|parent| {
-//         parent.spawn(head).with_children(|parent| {
-//             parent.spawn(camera);
-//         });
-//     });
-// }

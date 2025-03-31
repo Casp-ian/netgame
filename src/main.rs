@@ -7,7 +7,6 @@ use bevy::{
 };
 
 mod protocol;
-use protocol::*;
 
 #[cfg(feature = "client")]
 mod client;
@@ -27,26 +26,39 @@ fn main() {
     #[cfg(feature = "client")]
     app.add_plugins((
         client::ClientPlugins,
-        // DefaultPlugins,
+        // Default
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Client".to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }),
     ));
 
     #[cfg(feature = "server")]
     app.add_plugins((
         server::ServerPlugins,
+        // Default
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Server".to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }),
         // MinimalPlugins,
         // StatesPlugin,
         // LogPlugin::default(),
     ));
 
-    app
-        // Makes the server/client update continuously even while unfocused.
-        .add_plugins((
-            DefaultPlugins,
-            ProtocolPlugin,
-            PhysicsPlugins::default(),
-            SharedPlugins,
-        ));
+    app.add_plugins((
+        protocol::ProtocolPlugin,
+        PhysicsPlugins::default(),
+        SharedPlugins,
+    ));
 
+    // Makes the server/client update continuously even while unfocused.
     app.insert_resource(WinitSettings {
         focused_mode: Continuous,
         unfocused_mode: Continuous,

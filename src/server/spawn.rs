@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
-use server::ReplicationTarget;
 
 use crate::{
-    ChatChannel,
-    protocol::ChatMessage,
+    protocol::component::PlayerId,
+    protocol::message::{ChatChannel, ChatMessage},
     shared::player::{Head, PlayerBundle},
 };
 
@@ -63,7 +62,7 @@ fn handle_connections(
         // We add the `Replicate` bundle to start replicating the entity to clients
         // By default, the entity will be replicated to all clients
         let player = PlayerBundle {
-            player_id: crate::PlayerId { id: client_id },
+            player_id: PlayerId { id: client_id },
             mesh3d: Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
             mesh_material3d: MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             ..Default::default()

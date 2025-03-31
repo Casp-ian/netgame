@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
 
-use crate::{ChatChannel, protocol::ChatMessage};
+use crate::protocol::message::{ChatChannel, ChatMessage};
 
 pub struct ChatPlugin;
 
