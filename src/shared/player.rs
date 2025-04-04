@@ -31,7 +31,6 @@ impl Plugin for PlayerPlugin {
 }
 
 pub fn move_player(
-    // time: Res<Time>,
     mut qp: Query<
         (
             &ActionState<NetworkedInput>,
@@ -42,71 +41,66 @@ pub fn move_player(
         Without<Head>,
     >,
 ) {
-    if qp.is_empty() {
-        // info!("B");
-        return;
-    }
+    for (action, mut linear, hits, mut player) in qp.iter_mut() {
+        let grounded = 0.5;
+        let grounded_pad = 0.6;
+        let adjustment = 2.5;
+        let dampening = 0.8;
 
-    let (action, mut linear, hits, mut player) = qp.single_mut();
+        let ground_friction = 0.9;
 
-    let grounded = 0.5;
-    let grounded_pad = 0.6;
-    let adjustment = 2.5;
-    let dampening = 0.8;
+        let mut height = 100.0;
+        if let Some(x) = hits.iter().next() {
+            height = x.distance;
+        }
 
-    let ground_friction = 0.9;
+        let speed = 1.0;
+        let gravity = -9.8;
+        let jump_height = 10.0;
+        let max_fall = gravity * 2.0;
 
-    let mut height = 100.0;
-    if let Some(x) = hits.iter().next() {
-        height = x.distance;
-    }
+        let axis;
+        if let Some(test) = action.dual_axis_data(&NetworkedInput::Move) {
+            axis = test.pair;
+        } else {
+            axis = Vec2::ZERO;
+        }
 
-    let speed = 1.0;
-    let gravity = -9.8;
-    let jump_height = 10.0;
-    let max_fall = gravity * 2.0;
+        let jump;
+        if let Some(test) = action.button_data(&NetworkedInput::Jump) {
+            jump = test.state.pressed();
+        } else {
+            jump = false;
+        }
 
-    let axis;
-    if let Some(test) = action.dual_axis_data(&NetworkedInput::Move) {
-        axis = test.pair;
-    } else {
-        axis = Vec2::ZERO;
-    }
+        linear.x += axis.x * speed;
+        linear.z += axis.y * speed;
 
-    let jump;
-    if let Some(test) = action.button_data(&NetworkedInput::Jump) {
-        jump = test.state.pressed();
-    } else {
-        jump = false;
-    }
+        // info!("{:?}", linear);
 
-    linear.x += axis.x * speed;
-    linear.z += axis.y * speed;
+        // grounded state
+        if height > grounded - grounded_pad && height < grounded + grounded_pad {
+            player.state = PlayerState::Grounded;
+            let diff = (height - grounded) / -grounded_pad;
 
-    // info!("{:?}", linear);
+            linear.y += diff * adjustment;
+            linear.y *= dampening; // TODO this should be delta timed
 
-    // grounded state
-    if height > grounded - grounded_pad && height < grounded + grounded_pad {
-        player.state = PlayerState::Grounded;
-        let diff = (height - grounded) / -grounded_pad;
+            linear.x *= ground_friction;
+            linear.z *= ground_friction;
+        } else {
+            player.state = PlayerState::Aerial;
+        }
 
-        linear.y += diff * adjustment;
-        linear.y *= dampening; // TODO this should be delta timed
+        if jump && player.state == PlayerState::Grounded {
+            linear.y = jump_height;
+        }
 
-        linear.x *= ground_friction;
-        linear.z *= ground_friction;
-    } else {
-        player.state = PlayerState::Aerial;
-    }
+        // linear.y += gravity * time.delta_secs();
 
-    if jump && player.state == PlayerState::Grounded {
-        linear.y = jump_height;
-    }
-
-    // linear.y += gravity * time.delta_secs();
-
-    if linear.y < max_fall {
-        linear.y = max_fall;
+        if linear.y < max_fall {
+            linear.y = max_fall;
+        }
     }
 }
 

@@ -1,3 +1,5 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use bevy::prelude::*;
 use lightyear::{
     client::{
@@ -25,18 +27,26 @@ fn connect(mut commands: Commands) {
 }
 
 fn build_client_plugin() -> ClientPlugins {
+    let id = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        % 5000;
+
+    let mut client_addr = CLIENT_ADDR.clone();
+    client_addr.set_port(id as u16);
     // Authentication is where you specify how the client should connect to the server
     // This is where you provide the server address.
     let auth = Authentication::Manual {
         server_addr: SERVER_ADDR,
-        client_id: 0,
+        client_id: id,
         private_key: Key::default(),
         protocol_id: 0,
     };
     // The IoConfig will specify the transport to use.
     let io = IoConfig {
         // the address specified here is the client_address, because we open a UDP socket on the client
-        transport: ClientTransport::UdpSocket(CLIENT_ADDR),
+        transport: ClientTransport::UdpSocket(client_addr),
         ..Default::default()
     };
     // The NetConfig specifies how we establish a connection with the server.

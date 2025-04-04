@@ -31,7 +31,7 @@ pub fn register_components(app: &mut App) {
     app.register_component::<AngularVelocity>(ChannelDirection::Bidirectional)
         .add_prediction(ComponentSyncMode::Full);
 
-    app.add_interpolation_fn::<Transform>(TransformLinearInterpolation::lerp);
+    // app.add_interpolation_fn::<Transform>(TransformLinearInterpolation::lerp);
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-// use lightyear::prelude::*;
+
 use lightyear::{
     prelude::client::{ClientConnection, NetClient, Predicted},
     shared::replication::components::Controlled,

@@ -34,8 +34,8 @@ fn handle_connections(
             // },
             // authority: server::AuthorityPeer::Client(client_id),
             sync: server::SyncTarget {
-                prediction: NetworkTarget::All,
-                interpolation: NetworkTarget::All,
+                prediction: NetworkTarget::Single(client_id),
+                interpolation: NetworkTarget::AllExceptSingle(client_id),
             },
             // relevance_mode: NetworkRelevanceMode::All,
             controlled_by: server::ControlledBy {
@@ -59,8 +59,6 @@ fn handle_connections(
             )
             .unwrap();
 
-        // We add the `Replicate` bundle to start replicating the entity to clients
-        // By default, the entity will be replicated to all clients
         let player = PlayerBundle {
             player_id: PlayerId { id: client_id },
             mesh3d: Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
@@ -74,16 +72,10 @@ fn handle_connections(
             Visibility::Visible,
         );
 
-        let camera = (
-            Camera3d::default(),
-            Transform::from_xyz(0.0, 1.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
-            Visibility::Visible,
-        );
-
+        // We add the `Replicate` bundle to start replicating the entity to clients
+        // By default, the entity will be replicated to all clients
         commands.spawn((player, replicate)).with_children(|parent| {
-            parent.spawn(head).with_children(|parent| {
-                // parent.spawn(camera);
-            });
+            parent.spawn(head);
         });
 
         // Add a mapping from client id to entity id
