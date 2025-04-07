@@ -1,5 +1,5 @@
-use avian3d::prelude::*;
-use bevy::{color::palettes::css::PURPLE, prelude::*};
+use avian3d::prelude::RigidBody;
+use bevy::prelude::*;
 use leafwing_input_manager::prelude::InputMap;
 use leafwing_input_manager::prelude::VirtualDPad;
 use lightyear::prelude::client::*;
@@ -14,19 +14,7 @@ pub struct RenderPlugin;
 
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(
-            Update,
-            (add_character_mesh, add_projectile_mesh, draw_debug),
-        );
-    }
-}
-
-#[derive(Component)]
-struct DebugSphere;
-
-fn draw_debug(mut gizmos: Gizmos, character_query: Query<&Position, With<DebugSphere>>) {
-    for position in &character_query {
-        gizmos.sphere(position.0, 0.5, PURPLE);
+        app.add_systems(PostUpdate, (add_character_mesh, add_projectile_mesh));
     }
 }
 
@@ -35,10 +23,14 @@ fn add_character_mesh(
     character_query: Query<
         Entity,
         (
-            Or<(With<Predicted>, With<Interpolated>)>,
-            // Or<(Added<Predicted>, Added<Interpolated>)>,
+            // Or<(With<Predicted>, With<Interpolated>)>,
+            Or<(Added<Predicted>, Added<Interpolated>)>,
             With<PlayerId>,
-            // Without<Mesh3d>,
+            // Or<(
+            //     Without<Mesh3d>,
+            //     Without<MeshMaterial3d<StandardMaterial>>,
+            //     Without<RigidBody>,
+            // )>,
         ),
     >,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -47,13 +39,17 @@ fn add_character_mesh(
     for entity in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);
 
-        // let head = commands.spawn((Head, Transform::default())).id();
+        let head = commands
+            .spawn((Head, Transform::default()))
+            .with_child((
+                Camera3d::default(),
+                Transform::from_xyz(-5., 1., 0.).looking_at(Vec3::ZERO, Vec3::Y),
+            ))
+            .id();
 
-        // let mut body = commands.entity(entity);
+        let mut body = commands.entity(entity);
 
-        // body.add_child(head);
-
-        commands.entity(entity).insert((
+        body.insert((
             // PlayerBundle {
             //     ..Default::default()
             // },
@@ -61,8 +57,9 @@ fn add_character_mesh(
             MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             RigidBody::Dynamic, // Dont know why rigid body is needed to show the mesh??
             Visibility::Visible,
-            DebugSphere,
         ));
+
+        body.add_child(head);
     }
 }
 
