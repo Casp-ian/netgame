@@ -27,11 +27,12 @@ fn connect(mut commands: Commands) {
 }
 
 fn build_client_plugin() -> ClientPlugins {
-    let id = SystemTime::now()
+    let id = (SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
-        .as_secs()
-        % 5000;
+        .as_millis() as u64
+        % 1000)
+        + 4000;
 
     let mut client_addr = CLIENT_ADDR.clone();
     client_addr.set_port(id as u16);
