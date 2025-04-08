@@ -1,6 +1,10 @@
-use avian3d::prelude::*;
-use bevy::{input::mouse::MouseMotion, prelude::*};
-use leafwing_input_manager::prelude::{ActionState, InputMap, VirtualDPad};
+use std::f32::consts::PI;
+
+use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody, ShapeCaster, ShapeHits};
+use bevy::input::mouse::MouseMotion;
+use bevy::prelude::*;
+use leafwing_input_manager::prelude::{ActionState, InputMap, MouseMove, VirtualDPad};
+use lightyear::shared::replication::components::Controlled;
 use serde::{Deserialize, Serialize};
 
 use crate::protocol::{component::PlayerId, input::NetworkedInput};
@@ -15,31 +19,43 @@ pub enum PlayerState {
 #[require(Transform)]
 pub struct Player {
     pub state: PlayerState,
+    pub look_dir: Vec2,
 }
-
-#[derive(Component, PartialEq, Serialize, Deserialize)]
-#[require(Transform)]
-pub struct Head;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(FixedUpdate, move_player)
-            .add_systems(Update, move_camera);
+            .add_systems(Update, (look_player, move_camera));
     }
 }
 
-pub fn move_player(
-    mut qp: Query<
-        (
-            &ActionState<NetworkedInput>,
-            &mut LinearVelocity,
-            &ShapeHits,
-            &mut Player,
-        ),
-        Without<Head>,
-    >,
+fn look_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut Player)>) {
+    for (action, mut player) in qp.iter_mut() {
+        let sens = Vec2 {
+            x: -0.003,
+            y: 0.003,
+        };
+        let input = action.axis_pair(&NetworkedInput::Look);
+
+        let newlook = player.look_dir + (input * sens);
+        let clamped = Vec2 {
+            x: newlook.x,
+            y: newlook.y.clamp(-PI * 0.4, PI * 0.4),
+        };
+
+        player.look_dir = clamped;
+    }
+}
+
+fn move_player(
+    mut qp: Query<(
+        &ActionState<NetworkedInput>,
+        &mut LinearVelocity,
+        &ShapeHits,
+        &mut Player,
+    )>,
 ) {
     for (action, mut linear, hits, mut player) in qp.iter_mut() {
         let grounded = 0.5;
@@ -59,24 +75,21 @@ pub fn move_player(
         let jump_height = 10.0;
         let max_fall = gravity * 2.0;
 
-        let axis;
-        if let Some(test) = action.dual_axis_data(&NetworkedInput::Move) {
-            axis = test.pair;
-        } else {
-            axis = Vec2::ZERO;
-        }
+        let mut axis = action.axis_pair(&NetworkedInput::Move);
+        let jump = action.pressed(&NetworkedInput::Jump);
 
-        let jump;
-        if let Some(test) = action.button_data(&NetworkedInput::Jump) {
-            jump = test.state.pressed();
-        } else {
-            jump = false;
-        }
+        axis *= speed;
 
-        linear.x += axis.x * speed;
-        linear.z += axis.y * speed;
+        // let sin = ops::sin(player.look_dir.x);
+        // let cos = ops::cos(player.look_dir.x);
 
-        // info!("{:?}", linear);
+        // linear.x += (axis.x * cos) + (axis.y * sin);
+        // linear.z += (axis.y * cos) + (axis.x * sin);
+        //
+        linear.x += -axis.x;
+        linear.z += axis.y;
+
+        // info!("{:?}", player.look_dir.x);
 
         // grounded state
         if height > grounded - grounded_pad && height < grounded + grounded_pad {
@@ -104,21 +117,28 @@ pub fn move_player(
     }
 }
 
-pub fn move_camera(mut motion: EventReader<MouseMotion>, mut q: Query<&mut Transform, With<Head>>) {
-    let delta: Vec2 = motion
-        .read()
-        .map(|event| event.delta)
-        .reduce(|acc, e| acc + e)
-        .unwrap_or(Vec2::ZERO);
-
-    let sens = 0.01;
-
-    for mut t in &mut q {
-        t.rotate_axis(Dir3::Y, delta.x * -sens);
-        // as this is approximate, it might fuck up
-        let left = t.left().fast_renormalize();
-        t.rotate_axis(left, delta.y * sens);
+pub fn move_camera(
+    qp: Query<(&Transform, &mut Player), With<Controlled>>,
+    mut qc: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
+) {
+    if qp.is_empty() || qc.is_empty() {
+        return;
     }
+
+    let distance = 5.;
+
+    let (player_transform, player) = qp.single();
+    let mut camera_transform = qc.single_mut();
+
+    let player_pos = player_transform.translation;
+
+    let quat_x = Quat::from_axis_angle(Vec3::Y, player.look_dir.x);
+    let quat_y = Quat::from_axis_angle(quat_x.mul_vec3(Vec3::X), player.look_dir.y);
+
+    let diff = quat_y.mul_vec3(quat_x.mul_vec3(Vec3::NEG_Z * distance));
+
+    camera_transform.translation = player_pos + diff;
+    camera_transform.look_at(player_pos, Vec3::Y);
 }
 
 #[derive(Bundle)]
@@ -142,13 +162,15 @@ impl Default for PlayerBundle {
         Self {
             player: Player {
                 state: PlayerState::Grounded,
+                look_dir: Vec2::default(),
             },
             player_id: PlayerId {
                 id: lightyear::prelude::ClientId::Local(0),
             },
 
             input: InputMap::new([(NetworkedInput::Jump, KeyCode::Space)])
-                .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd()),
+                .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd())
+                .with_dual_axis(NetworkedInput::Look, MouseMove::default()),
 
             mesh3d: Mesh3d::default(),
             mesh_material3d: MeshMaterial3d::default(),

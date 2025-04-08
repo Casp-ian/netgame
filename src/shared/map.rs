@@ -22,7 +22,6 @@ pub fn setup_map(
         Transform::from_xyz(0.0, -0.5, 0.0),
         RigidBody::Static,
         Collider::cuboid(100.0, 1.0, 100.0),
-        Visibility::Hidden,
     ));
     // cube
     commands.spawn((
@@ -30,7 +29,7 @@ pub fn setup_map(
         RigidBody::Static,
         Collider::cuboid(1.0, 1.0, 1.0),
         MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-        Transform::from_xyz(0.0, 0.5, 0.0),
+        Transform::from_xyz(1.0, 0.5, 2.0),
     ));
     // light
     commands.spawn((
@@ -41,6 +40,8 @@ pub fn setup_map(
         Transform::from_xyz(4.0, 8.0, 4.0),
     ));
 
+    // TODO disable rendering on server
+    // #[cfg(feature = "server")]
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(10.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),

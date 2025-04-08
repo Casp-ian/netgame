@@ -4,7 +4,7 @@ use lightyear::prelude::*;
 use crate::{
     protocol::component::PlayerId,
     protocol::message::{ChatChannel, ChatMessage},
-    shared::player::{Head, PlayerBundle},
+    shared::player::PlayerBundle,
 };
 
 pub struct SpawnPlugin;
@@ -66,17 +66,9 @@ fn handle_connections(
             ..Default::default()
         };
 
-        let head = (
-            Head,
-            Transform::from_xyz(0.0, 0.5, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-            Visibility::Visible,
-        );
-
         // We add the `Replicate` bundle to start replicating the entity to clients
         // By default, the entity will be replicated to all clients
-        commands.spawn((player, replicate)).with_children(|parent| {
-            parent.spawn(head);
-        });
+        commands.spawn((player, replicate));
 
         // Add a mapping from client id to entity id
         // global.client_id_to_entity_id.insert(client_id, entity.id());

@@ -7,7 +7,6 @@ use lightyear::prelude::server::ReplicationTarget;
 
 use crate::protocol::component::PlayerId;
 use crate::protocol::component::ProjectileId;
-use crate::shared::player::Head;
 use crate::shared::player::PlayerBundle;
 
 pub struct RenderPlugin;
@@ -39,14 +38,6 @@ fn add_character_mesh(
     for entity in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);
 
-        let head = commands
-            .spawn((Head, Transform::default()))
-            .with_child((
-                Camera3d::default(),
-                Transform::from_xyz(-5., 1., 0.).looking_at(Vec3::ZERO, Vec3::Y),
-            ))
-            .id();
-
         let mut body = commands.entity(entity);
 
         body.insert((
@@ -58,8 +49,6 @@ fn add_character_mesh(
             RigidBody::Dynamic, // Dont know why rigid body is needed to show the mesh??
             Visibility::Visible,
         ));
-
-        body.add_child(head);
     }
 }
 

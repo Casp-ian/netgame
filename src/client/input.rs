@@ -29,7 +29,8 @@ fn handle_new_character(
             info!("Adding InputMap to controlled and predicted entity {entity:?}");
             commands.entity(entity).insert(
                 InputMap::new([(NetworkedInput::Jump, KeyCode::Space)])
-                    .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd()),
+                    .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd())
+                    .with_dual_axis(NetworkedInput::Look, MouseMove::default()),
             );
         } else {
             info!("Remote character replicated to us: {entity:?}");

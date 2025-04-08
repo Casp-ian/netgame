@@ -6,6 +6,8 @@ use lightyear::prelude::*;
 pub enum NetworkedInput {
     #[actionlike(DualAxis)]
     Move,
+    #[actionlike(DualAxis)]
+    Look,
     #[actionlike(Button)]
     Jump,
 }
