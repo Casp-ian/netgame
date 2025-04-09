@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::protocol::{component::PlayerId, input::NetworkedInput};
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum PlayerState {
     Grounded,
     Aerial,
 }
 
-#[derive(Component, PartialEq, Serialize, Deserialize)]
+#[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[require(Transform)]
 pub struct Player {
     pub state: PlayerState,
@@ -26,11 +26,15 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, (float_player, move_player).chain())
-            .add_systems(Update, (look_player, move_camera));
+        app.add_systems(
+            FixedUpdate,
+            (look_player, float_player, move_player).chain(),
+        )
+        .add_systems(Update, (move_camera));
     }
 }
 
+// TODO this probably should be in update, to make camera movement smooth to framerate, but it breaks determinism
 fn look_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut Player)>) {
     for (action, mut player) in qp.iter_mut() {
         let sens = Vec2 {
@@ -42,7 +46,7 @@ fn look_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut Player)>) {
         let newlook = player.look_dir + (input * sens);
         let clamped = Vec2 {
             x: newlook.x,
-            y: newlook.y.clamp(-PI * 0.4, PI * 0.4),
+            y: newlook.y.clamp(-PI * 0.1, PI * 0.4),
         };
 
         player.look_dir = clamped;
@@ -66,9 +70,7 @@ fn float_player(
             height = x.distance;
         }
 
-        let speed = 1.0;
         let gravity = -9.8;
-        let jump_height = 10.0;
         let max_fall = gravity * 2.0;
 
         // grounded state
@@ -108,21 +110,20 @@ fn move_player(
         let speed = 1.0;
         let jump_height = 10.0;
 
-        let mut axis = action.axis_pair(&NetworkedInput::Move);
+        let axis = action.axis_pair(&NetworkedInput::Move);
         let jump = action.pressed(&NetworkedInput::Jump);
 
-        axis *= speed;
+        let quat_x = Quat::from_axis_angle(Vec3::Y, player.look_dir.x);
+        let mut movement: Vec3 = Vec3 {
+            x: -axis.x,
+            y: 0.,
+            z: axis.y,
+        };
 
-        // let sin = ops::sin(player.look_dir.x);
-        // let cos = ops::cos(player.look_dir.x);
+        movement = quat_x.mul_vec3(movement);
+        movement = movement.normalize_or_zero() * speed;
 
-        // linear.x += (axis.x * cos) + (axis.y * sin);
-        // linear.z += (axis.y * cos) + (axis.x * sin);
-        //
-        linear.x += -axis.x;
-        linear.z += axis.y;
-
-        // info!("{:?}", player.look_dir.x);
+        linear.0 += movement;
 
         if jump && player.state == PlayerState::Grounded {
             linear.y = jump_height;
@@ -140,7 +141,7 @@ pub fn move_camera(
 
     let distance = 5.;
 
-    let (player_transform, player) = qp.single();
+    let (player_transform, player) = qp.iter().last().unwrap();
     let mut camera_transform = qc.single_mut();
 
     let player_pos = player_transform.translation;

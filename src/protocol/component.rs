@@ -1,10 +1,13 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::client::{ComponentSyncMode, LerpFn};
-use lightyear::{prelude::*, utils::bevy::TransformLinearInterpolation};
+use lightyear::prelude::client::ComponentSyncMode;
+use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::shared::player::Player;
+
 pub fn register_components(app: &mut App) {
+    // Ids
     app.register_component::<PlayerId>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Once)
         .add_interpolation(ComponentSyncMode::Once);
@@ -13,6 +16,7 @@ pub fn register_components(app: &mut App) {
         .add_prediction(ComponentSyncMode::Once)
         .add_interpolation(ComponentSyncMode::Once);
 
+    // General positional
     app.register_component::<Position>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Full)
         .add_interpolation(ComponentSyncMode::Full)
@@ -31,7 +35,9 @@ pub fn register_components(app: &mut App) {
     app.register_component::<AngularVelocity>(ChannelDirection::Bidirectional)
         .add_prediction(ComponentSyncMode::Full);
 
-    // app.add_interpolation_fn::<Transform>(TransformLinearInterpolation::lerp);
+    // Player
+    app.register_component::<Player>(ChannelDirection::ServerToClient)
+        .add_prediction(ComponentSyncMode::Full);
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
