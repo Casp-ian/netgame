@@ -7,6 +7,7 @@ use std::{
 
 pub mod map;
 pub mod player;
+pub mod projectile;
 
 pub const REPLICATION_INTERVAL: Duration = Duration::from_millis(33);
 pub const TICK_DURATION: Duration = Duration::from_millis(33);

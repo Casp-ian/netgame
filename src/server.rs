@@ -1,16 +1,17 @@
 use bevy::app::Plugin;
 
-mod network;
-use network::*;
-mod spawn;
-use spawn::*;
 mod chat;
-use chat::*;
+mod network;
+mod spawn;
 
 pub struct ServerPlugins;
 
 impl Plugin for ServerPlugins {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugins((ServerNetworkPlugin, SpawnPlugin, ChatPlugin));
+        app.add_plugins((
+            network::ServerNetworkPlugin,
+            spawn::SpawnPlugin,
+            chat::ChatPlugin,
+        ));
     }
 }

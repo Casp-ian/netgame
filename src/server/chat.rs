@@ -4,6 +4,9 @@ use lightyear::prelude::*;
 
 use crate::protocol::component::ProjectileId;
 use crate::protocol::message::{ChatChannel, ChatMessage};
+use crate::shared::projectile::ProjectileBundle;
+
+use super::network::REPLICATION_GROUP;
 
 pub struct ChatPlugin;
 
@@ -32,6 +35,7 @@ fn forward_chat(
             .unwrap();
 
         let replicate = ServerReplicate {
+            group: REPLICATION_GROUP,
             // target: ReplicationTarget {
             //     target: NetworkTarget::All,
             // },
@@ -41,24 +45,18 @@ fn forward_chat(
                 interpolation: NetworkTarget::All,
             },
             // relevance_mode: NetworkRelevanceMode::All,
-            // controlled_by: server::ControlledBy {
-            //     target: NetworkTarget::Single(client_id),
-            //     lifetime: server::Lifetime::SessionBased,
-            // },
-            // group: todo!(),
             hierarchy: ReplicateHierarchy {
-                enabled: true,
-                recursive: true,
+                enabled: false,
+                ..default()
             },
             ..default()
         };
 
         commands.spawn((
             replicate,
-            Transform::from_xyz(0.0, 2.5, 0.0),
             ProjectileId { id: 0 },
-            RigidBody::Dynamic,
-            Collider::sphere(0.25),
+            Transform::from_xyz(0.0, 2.5, 0.0),
+            ProjectileBundle { ..default() },
             Mesh3d(meshes.add(Sphere::new(0.25))),
             MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
         ));

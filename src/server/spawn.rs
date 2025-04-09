@@ -7,6 +7,8 @@ use crate::{
     shared::player::PlayerBundle,
 };
 
+use super::network::REPLICATION_GROUP;
+
 pub struct SpawnPlugin;
 
 impl Plugin for SpawnPlugin {
@@ -29,23 +31,25 @@ fn handle_connections(
         let client_id = connection.client_id;
 
         let replicate = ServerReplicate {
+            group: REPLICATION_GROUP,
             // target: ReplicationTarget {
             //     target: NetworkTarget::All,
             // },
-            // authority: server::AuthorityPeer::Client(client_id),
             sync: server::SyncTarget {
-                prediction: NetworkTarget::Single(client_id),
-                interpolation: NetworkTarget::AllExceptSingle(client_id),
+                // prediction: NetworkTarget::Single(client_id),
+                // interpolation: NetworkTarget::AllExceptSingle(client_id),
+                prediction: NetworkTarget::All,
+                interpolation: NetworkTarget::None,
             },
             // relevance_mode: NetworkRelevanceMode::All,
+            // authority: server::AuthorityPeer::Server,
             controlled_by: server::ControlledBy {
                 target: NetworkTarget::Single(client_id),
                 lifetime: server::Lifetime::SessionBased,
             },
-            // group: todo!(),
             hierarchy: ReplicateHierarchy {
-                enabled: true,
-                recursive: true,
+                enabled: false,
+                ..default()
             },
             ..default()
         };
@@ -59,12 +63,14 @@ fn handle_connections(
             )
             .unwrap();
 
-        let player = PlayerBundle {
-            player_id: PlayerId { id: client_id },
-            mesh3d: Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
-            mesh_material3d: MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-            ..Default::default()
-        };
+        let player = (
+            Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
+            MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+            PlayerId { id: client_id },
+            PlayerBundle {
+                ..Default::default()
+            },
+        );
 
         // We add the `Replicate` bundle to start replicating the entity to clients
         // By default, the entity will be replicated to all clients

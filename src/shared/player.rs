@@ -26,7 +26,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, move_player)
+        app.add_systems(FixedUpdate, (float_player, move_player).chain())
             .add_systems(Update, (look_player, move_camera));
     }
 }
@@ -49,15 +49,11 @@ fn look_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut Player)>) {
     }
 }
 
-fn move_player(
-    mut qp: Query<(
-        &ActionState<NetworkedInput>,
-        &mut LinearVelocity,
-        &ShapeHits,
-        &mut Player,
-    )>,
+fn float_player(
+    // comment to keep rust format from doing this
+    mut qp: Query<(&mut LinearVelocity, &ShapeHits, &mut Player)>,
 ) {
-    for (action, mut linear, hits, mut player) in qp.iter_mut() {
+    for (mut linear, hits, mut player) in qp.iter_mut() {
         let grounded = 0.5;
         let grounded_pad = 0.6;
         let adjustment = 2.5;
@@ -75,6 +71,43 @@ fn move_player(
         let jump_height = 10.0;
         let max_fall = gravity * 2.0;
 
+        // grounded state
+        if height > grounded - grounded_pad && height < grounded + grounded_pad {
+            player.state = PlayerState::Grounded;
+            let diff = (height - grounded) / -grounded_pad;
+
+            linear.y += diff * adjustment;
+            linear.y *= dampening; // TODO this should be delta timed
+
+            linear.x *= ground_friction;
+            linear.z *= ground_friction;
+        } else {
+            player.state = PlayerState::Aerial;
+        }
+
+        if linear.y < max_fall {
+            linear.y = max_fall;
+        }
+    }
+}
+
+fn move_player(
+    mut qp: Query<(
+        &ActionState<NetworkedInput>,
+        &mut LinearVelocity,
+        &Player,
+        Has<Controlled>,
+    )>,
+) {
+    for (action, mut linear, player, controlled) in qp.iter_mut() {
+        #[cfg(feature = "client")]
+        if !controlled {
+            continue;
+        }
+
+        let speed = 1.0;
+        let jump_height = 10.0;
+
         let mut axis = action.axis_pair(&NetworkedInput::Move);
         let jump = action.pressed(&NetworkedInput::Jump);
 
@@ -91,28 +124,8 @@ fn move_player(
 
         // info!("{:?}", player.look_dir.x);
 
-        // grounded state
-        if height > grounded - grounded_pad && height < grounded + grounded_pad {
-            player.state = PlayerState::Grounded;
-            let diff = (height - grounded) / -grounded_pad;
-
-            linear.y += diff * adjustment;
-            linear.y *= dampening; // TODO this should be delta timed
-
-            linear.x *= ground_friction;
-            linear.z *= ground_friction;
-        } else {
-            player.state = PlayerState::Aerial;
-        }
-
         if jump && player.state == PlayerState::Grounded {
             linear.y = jump_height;
-        }
-
-        // linear.y += gravity * time.delta_secs();
-
-        if linear.y < max_fall {
-            linear.y = max_fall;
         }
     }
 }
@@ -144,11 +157,6 @@ pub fn move_camera(
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub player: Player,
-    pub player_id: PlayerId,
-    pub input: InputMap<NetworkedInput>,
-    pub mesh3d: Mesh3d,
-    pub mesh_material3d: MeshMaterial3d<StandardMaterial>,
-    pub transform: Transform,
     pub rigid_body: RigidBody,
     pub collider: Collider,
     pub locked_axes: LockedAxes,
@@ -164,18 +172,7 @@ impl Default for PlayerBundle {
                 state: PlayerState::Grounded,
                 look_dir: Vec2::default(),
             },
-            player_id: PlayerId {
-                id: lightyear::prelude::ClientId::Local(0),
-            },
 
-            input: InputMap::new([(NetworkedInput::Jump, KeyCode::Space)])
-                .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd())
-                .with_dual_axis(NetworkedInput::Look, MouseMove::default()),
-
-            mesh3d: Mesh3d::default(),
-            mesh_material3d: MeshMaterial3d::default(),
-
-            transform: Transform::from_xyz(0.0, 5.0, 0.0),
             rigid_body: RigidBody::Dynamic,
             collider: Collider::capsule(0.25, 0.1),
             locked_axes: LockedAxes::ROTATION_LOCKED,

@@ -2,13 +2,15 @@ use bevy::prelude::*;
 use config::ServerConfig;
 use lightyear::{
     prelude::{
-        ReplicationConfig,
+        ReplicationConfig, ReplicationGroup,
         server::{IoConfig, NetConfig, ServerCommandsExt, ServerTransport},
     },
     server::{config::NetcodeConfig, plugin::ServerPlugins, *},
 };
 
 use crate::shared::{SERVER_ADDR, shared_config};
+
+pub const REPLICATION_GROUP: ReplicationGroup = ReplicationGroup::new_id(0);
 
 pub struct ServerNetworkPlugin;
 impl Plugin for ServerNetworkPlugin {

@@ -6,16 +6,13 @@ use lightyear::{
     shared::replication::components::Controlled,
 };
 
-use crate::{
-    protocol::{component::PlayerId, input::NetworkedInput},
-    shared::player::PlayerBundle,
-};
+use crate::protocol::{component::PlayerId, input::NetworkedInput};
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_new_character);
+        app.add_systems(PostUpdate, handle_new_character);
     }
 }
 
@@ -36,7 +33,7 @@ fn handle_new_character(
             info!("Remote character replicated to us: {entity:?}");
         }
         let client_id = connection.client.id();
-        info!(?entity, ?client_id, "Adding physics to character");
-        commands.entity(entity).insert(PlayerBundle::default());
+        // info!(?entity, ?client_id, "Adding physics to character");
+        // commands.entity(entity).insert(PlayerBundle::default());
     }
 }
