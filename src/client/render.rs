@@ -1,6 +1,3 @@
-use avian3d::prelude::Collider;
-use avian3d::prelude::LockedAxes;
-use avian3d::prelude::RigidBody;
 use bevy::prelude::*;
 use lightyear::prelude::client::*;
 
@@ -19,9 +16,9 @@ impl Plugin for RenderPlugin {
 
 fn add_character_mesh(
     mut commands: Commands,
-    character_query: Query<Entity, (Or<(Added<Predicted>, Added<Interpolated>)>, With<PlayerId>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    character_query: Query<Entity, (Or<(Added<Predicted>, Added<Interpolated>)>, With<PlayerId>)>,
 ) {
     for entity in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);

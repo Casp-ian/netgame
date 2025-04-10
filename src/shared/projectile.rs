@@ -7,6 +7,7 @@ pub struct ProjectileBundle {
     pub collider: Collider,
     pub visibility: Visibility,
 }
+
 // TODO i would make a scene out of this instead of a bundle
 impl Default for ProjectileBundle {
     fn default() -> Self {
