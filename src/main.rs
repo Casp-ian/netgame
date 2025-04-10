@@ -1,6 +1,4 @@
 use avian3d::PhysicsPlugins;
-use bevy::log::{Level, LogPlugin};
-use bevy::state::app::StatesPlugin;
 use bevy::{
     prelude::*,
     winit::{UpdateMode::Continuous, WinitSettings},
@@ -25,7 +23,6 @@ fn main() {
 
     #[cfg(feature = "client")]
     app.add_plugins((
-        client::ClientPlugins,
         // Default
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -34,11 +31,11 @@ fn main() {
             }),
             ..Default::default()
         }),
+        client::ClientPlugins,
     ));
 
     #[cfg(feature = "server")]
     app.add_plugins((
-        server::ServerPlugins,
         // Default
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -50,6 +47,7 @@ fn main() {
         // MinimalPlugins,
         // StatesPlugin,
         // LogPlugin::default(),
+        server::ServerPlugins,
     ));
 
     app.add_plugins((

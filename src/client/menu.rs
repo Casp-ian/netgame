@@ -1,15 +1,19 @@
-use bevy::{color::palettes::css::RED, ecs::system::SystemId, prelude::*};
+use bevy::{ecs::system::SystemId, prelude::*};
 
-use super::oneshot::ClientOneshotSystems;
+use super::{ClientGameState, oneshot::ClientOneshotSystems};
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup)
-            .add_systems(Update, button_system);
+            .add_systems(Update, button_system)
+            .add_systems(OnEnter(ClientGameState::Game), hide_menu);
     }
 }
+
+#[derive(Component)]
+struct MainMenu;
 
 #[derive(Component)]
 #[require(Button)]
@@ -54,13 +58,16 @@ fn setup(
 ) {
     // ui camera
     commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        })
+        .spawn((
+            MainMenu,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+        ))
         .with_children(|parent| {
             parent.spawn((
                 Button,
@@ -87,4 +94,10 @@ fn setup(
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ));
         });
+}
+
+fn hide_menu(mut query: Query<&mut Visibility, With<MainMenu>>) {
+    for mut visibility in &mut query {
+        *visibility = Visibility::Hidden;
+    }
 }

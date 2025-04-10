@@ -8,20 +8,20 @@ mod input;
 mod menu;
 mod network;
 mod oneshot;
-mod render;
+mod predicted;
 
 pub struct ClientPlugins;
 
 impl Plugin for ClientPlugins {
     fn build(&self, app: &mut bevy::prelude::App) {
-        // app.insert_state(ClientGameState::MainMenu);
+        app.insert_state(ClientGameState::MainMenu);
         app.init_resource::<oneshot::ClientOneshotSystems>();
         app.add_plugins((
             chat::ChatPlugin,
             input::InputPlugin,
             menu::MenuPlugin,
             network::ClientNetworkPlugin,
-            render::RenderPlugin,
+            predicted::PredictedPlugin,
         ));
     }
 }

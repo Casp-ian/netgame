@@ -6,9 +6,9 @@ use crate::protocol::component::ProjectileId;
 use crate::shared::player::PlayerBundle;
 use crate::shared::projectile::ProjectileBundle;
 
-pub struct RenderPlugin;
+pub struct PredictedPlugin;
 
-impl Plugin for RenderPlugin {
+impl Plugin for PredictedPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_systems(PostUpdate, (add_character_mesh, add_projectile_mesh));
     }
@@ -37,17 +37,7 @@ fn add_character_mesh(
 
 fn add_projectile_mesh(
     mut commands: Commands,
-    character_query: Query<
-        Entity,
-        (
-            Or<(
-                Added<Predicted>,
-                // Added<ReplicationTarget>,
-                // Added<Interpolated>,
-            )>,
-            With<ProjectileId>,
-        ),
-    >,
+    character_query: Query<Entity, (Or<(Added<Predicted>,)>, With<ProjectileId>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {

@@ -15,10 +15,6 @@ impl FromWorld for ClientOneshotSystems {
             "connect".into(),
             world.register_system(super::network::connect),
         );
-        // my_item_systems.0.insert(
-        //     "magic".into(),
-        //     world.register_system(item_handler_magic_potion),
-        // );
 
         systems
     }

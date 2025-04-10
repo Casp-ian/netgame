@@ -14,18 +14,19 @@ use lightyear::{
 
 use crate::shared::{CLIENT_ADDR, SERVER_ADDR, shared_config};
 
+use super::ClientGameState;
+
 pub struct ClientNetworkPlugin;
 impl Plugin for ClientNetworkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugins(build_client_plugin())
-        // .add_systems(Startup, connect)
-        ;
+        app.add_plugins(build_client_plugin());
     }
 }
 
 // oneshot
-pub fn connect(mut commands: Commands) {
+pub fn connect(mut commands: Commands, mut game_state: ResMut<NextState<ClientGameState>>) {
     commands.connect_client();
+    game_state.set(ClientGameState::Game);
 }
 
 fn build_client_plugin() -> ClientPlugins {
