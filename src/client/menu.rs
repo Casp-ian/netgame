@@ -1,4 +1,6 @@
-use bevy::{color::palettes::css::RED, prelude::*};
+use bevy::{color::palettes::css::RED, ecs::system::SystemId, prelude::*};
+
+use super::oneshot::ClientOneshotSystems;
 
 pub struct MenuPlugin;
 
@@ -9,21 +11,29 @@ impl Plugin for MenuPlugin {
     }
 }
 
+#[derive(Component)]
+#[require(Button)]
+pub struct ButtonEffect {
+    system: SystemId,
+}
+
 const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 fn button_system(
+    mut commands: Commands,
     mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &mut Text),
+        (&Interaction, &mut BackgroundColor, &mut Text, &ButtonEffect),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
-    for (interaction, mut color, mut text) in &mut interaction_query {
+    for (interaction, mut color, mut text, effect) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 **text = "Press".to_string();
                 *color = PRESSED_BUTTON.into();
+                commands.run_system(effect.system);
             }
             Interaction::Hovered => {
                 **text = "Hover".to_string();
@@ -37,7 +47,11 @@ fn button_system(
     }
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    systems: Res<ClientOneshotSystems>,
+) {
     // ui camera
     commands
         .spawn(Node {
@@ -50,6 +64,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent.spawn((
                 Button,
+                ButtonEffect {
+                    system: systems.list["connect"],
+                },
                 Node {
                     width: Val::Px(150.0),
                     justify_content: JustifyContent::Center,

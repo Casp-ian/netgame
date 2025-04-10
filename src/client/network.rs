@@ -18,11 +18,13 @@ pub struct ClientNetworkPlugin;
 impl Plugin for ClientNetworkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins(build_client_plugin())
-            .add_systems(Startup, connect);
+        // .add_systems(Startup, connect)
+        ;
     }
 }
 
-fn connect(mut commands: Commands) {
+// oneshot
+pub fn connect(mut commands: Commands) {
     commands.connect_client();
 }
 
