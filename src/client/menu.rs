@@ -8,7 +8,8 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup)
             .add_systems(Update, button_system)
-            .add_systems(OnEnter(ClientGameState::Game), hide_menu);
+            .add_systems(OnEnter(ClientGameState::Game), hide_menu)
+            .add_systems(OnEnter(ClientGameState::MainMenu), show_menu);
     }
 }
 
@@ -99,5 +100,10 @@ fn setup(
 fn hide_menu(mut query: Query<&mut Visibility, With<MainMenu>>) {
     for mut visibility in &mut query {
         *visibility = Visibility::Hidden;
+    }
+}
+fn show_menu(mut query: Query<&mut Visibility, With<MainMenu>>) {
+    for mut visibility in &mut query {
+        *visibility = Visibility::Visible;
     }
 }

@@ -7,7 +7,7 @@ use lightyear::{
         plugin::ClientPlugins,
     },
     prelude::{
-        Key,
+        ClientDisconnectEvent, Key,
         client::{Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig},
     },
 };
@@ -20,6 +20,8 @@ pub struct ClientNetworkPlugin;
 impl Plugin for ClientNetworkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins(build_client_plugin());
+
+        app.add_systems(Update, disconnect);
     }
 }
 
@@ -27,6 +29,16 @@ impl Plugin for ClientNetworkPlugin {
 pub fn connect(mut commands: Commands, mut game_state: ResMut<NextState<ClientGameState>>) {
     commands.connect_client();
     game_state.set(ClientGameState::Game);
+}
+
+fn disconnect(
+    mut connections: EventReader<ClientDisconnectEvent>,
+    mut game_state: ResMut<NextState<ClientGameState>>,
+) {
+    for event in connections.read() {
+        info!("{:?}", event);
+        game_state.set(ClientGameState::MainMenu);
+    }
 }
 
 fn build_client_plugin() -> ClientPlugins {
