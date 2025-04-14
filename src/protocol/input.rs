@@ -10,6 +10,8 @@ pub enum NetworkedInput {
     Look,
     #[actionlike(Button)]
     Jump,
+    #[actionlike(Button)]
+    Fire,
 }
 
 pub fn register_input(app: &mut App) {

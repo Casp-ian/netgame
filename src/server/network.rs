@@ -10,8 +10,6 @@ use lightyear::{
 
 use crate::shared::{SERVER_ADDR, shared_config};
 
-pub const REPLICATION_GROUP: ReplicationGroup = ReplicationGroup::new_id(0);
-
 pub struct ServerNetworkPlugin;
 impl Plugin for ServerNetworkPlugin {
     fn build(&self, app: &mut App) {

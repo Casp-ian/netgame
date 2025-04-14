@@ -1,13 +1,18 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody, ShapeCaster, ShapeHits};
-use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
-use leafwing_input_manager::prelude::{ActionState, InputMap, MouseMove, VirtualDPad};
-use lightyear::shared::replication::components::Controlled;
+use leafwing_input_manager::prelude::ActionState;
+use lightyear::{
+    prelude::*,
+    prelude::{NetworkTarget, PreSpawnedPlayerObject, ServerReplicate},
+    shared::replication::components::Controlled,
+};
 use serde::{Deserialize, Serialize};
 
-use crate::protocol::{component::PlayerId, input::NetworkedInput};
+use crate::protocol::{REPLICATION_GROUP, component::ProjectileId, input::NetworkedInput};
+
+use super::projectile::ProjectileBundle;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum PlayerState {
@@ -28,7 +33,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            (look_player, float_player, move_player).chain(),
+            ((look_player, float_player, move_player).chain(), shoot),
         )
         .add_systems(Update, (move_camera));
     }
@@ -93,20 +98,8 @@ fn float_player(
     }
 }
 
-fn move_player(
-    mut qp: Query<(
-        &ActionState<NetworkedInput>,
-        &mut LinearVelocity,
-        &Player,
-        Has<Controlled>,
-    )>,
-) {
-    for (action, mut linear, player, controlled) in qp.iter_mut() {
-        #[cfg(feature = "client")]
-        if !controlled {
-            continue;
-        }
-
+fn move_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut LinearVelocity, &Player)>) {
+    for (action, mut linear, player) in qp.iter_mut() {
         let speed = 1.0;
         let jump_height = 10.0;
 
@@ -128,6 +121,42 @@ fn move_player(
         if jump && player.state == PlayerState::Grounded {
             linear.y = jump_height;
         }
+    }
+}
+
+fn shoot(
+    mut commands: Commands,
+    qp: Query<(&ActionState<NetworkedInput>, &Transform, &Player), With<LinearVelocity>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (action, pos, player) in qp.iter() {
+        if action.pressed(&NetworkedInput::Fire) {
+            let replicate = ServerReplicate {
+                group: REPLICATION_GROUP,
+                sync: server::SyncTarget {
+                    prediction: NetworkTarget::All,
+                    interpolation: NetworkTarget::None,
+                },
+                ..default()
+            };
+
+            commands.spawn((
+                replicate,
+                PreSpawnedPlayerObject::default(),
+                ProjectileId { id: 0 },
+                Transform::from_translation(pos.translation + Vec3::Y),
+                ProjectileBundle { ..default() },
+                LinearVelocity(Vec3 {
+                    x: 0.0,
+                    y: 5.0,
+                    z: 0.0,
+                }),
+                Mesh3d(meshes.add(Sphere::new(0.25))),
+                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+            ));
+        }
+        // test
     }
 }
 

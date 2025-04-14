@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use lightyear::prelude::ReplicationGroup;
 
 pub mod component;
 pub mod input;
@@ -15,3 +16,5 @@ impl Plugin for ProtocolPlugin {
         input::register_input(app);
     }
 }
+
+pub const REPLICATION_GROUP: ReplicationGroup = ReplicationGroup::new_id(0);

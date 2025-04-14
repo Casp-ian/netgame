@@ -7,7 +7,7 @@ use crate::{
     shared::player::PlayerBundle,
 };
 
-use super::network::REPLICATION_GROUP;
+use crate::protocol::REPLICATION_GROUP;
 
 pub struct SpawnPlugin;
 

@@ -31,6 +31,7 @@ fn main() {
             }),
             ..Default::default()
         }),
+        PhysicsPlugins::default(),
         client::ClientPlugins,
     ));
 
@@ -47,14 +48,11 @@ fn main() {
         // MinimalPlugins,
         // StatesPlugin,
         // LogPlugin::default(),
+        PhysicsPlugins::default(),
         server::ServerPlugins,
     ));
 
-    app.add_plugins((
-        protocol::ProtocolPlugin,
-        PhysicsPlugins::default(),
-        SharedPlugins,
-    ));
+    app.add_plugins((protocol::ProtocolPlugin, SharedPlugins));
 
     // Makes the server/client update continuously even while unfocused.
     app.insert_resource(WinitSettings {
