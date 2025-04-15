@@ -18,7 +18,7 @@ pub fn register_input(app: &mut App) {
     app.add_plugins(LeafwingInputPlugin {
         config: InputConfig::<NetworkedInput> {
             rebroadcast_inputs: true,
-            // lag_compensation: true, // good default?
+            // lag_compensation: true,
             ..default()
         },
     });

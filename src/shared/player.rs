@@ -126,12 +126,34 @@ fn move_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut LinearVelocity,
 
 fn shoot(
     mut commands: Commands,
-    qp: Query<(&ActionState<NetworkedInput>, &Transform, &Player), With<LinearVelocity>>,
+    qp: Query<
+        (
+            &ActionState<NetworkedInput>,
+            &LinearVelocity,
+            &Transform,
+            &Player,
+        ),
+        With<LinearVelocity>,
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (action, pos, player) in qp.iter() {
+    for (action, vel, pos, player) in qp.iter() {
         if action.pressed(&NetworkedInput::Fire) {
+            let distance = 1.;
+            let speed = 5.;
+            let up_speed = 5.;
+
+            let player_pos = pos.translation;
+
+            let quat_x = Quat::from_axis_angle(Vec3::Y, player.look_dir.x);
+            let quat_y = Quat::from_axis_angle(quat_x.mul_vec3(Vec3::X), player.look_dir.y);
+
+            let pos_diff = quat_x.mul_vec3(Vec3::Z * distance);
+            let vel_diff = quat_y.mul_vec3(quat_x.mul_vec3(Vec3::Z * speed + Vec3::Y * up_speed));
+
+            let spawn_pos: Vec3 = player_pos + pos_diff;
+
             let replicate = ServerReplicate {
                 group: REPLICATION_GROUP,
                 sync: server::SyncTarget {
@@ -145,13 +167,9 @@ fn shoot(
                 replicate,
                 PreSpawnedPlayerObject::default(),
                 ProjectileId { id: 0 },
-                Transform::from_translation(pos.translation + Vec3::Y),
+                Transform::from_translation(spawn_pos),
                 ProjectileBundle { ..default() },
-                LinearVelocity(Vec3 {
-                    x: 0.0,
-                    y: 5.0,
-                    z: 0.0,
-                }),
+                LinearVelocity(vel_diff + vel.0),
                 Mesh3d(meshes.add(Sphere::new(0.25))),
                 MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             ));

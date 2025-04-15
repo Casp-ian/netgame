@@ -1,3 +1,4 @@
+use avian3d::prelude::RigidBody;
 use bevy::prelude::*;
 use lightyear::prelude::client::*;
 
@@ -16,9 +17,9 @@ impl Plugin for PredictedPlugin {
 
 fn add_character_mesh(
     mut commands: Commands,
+    character_query: Query<Entity, (Or<(Added<Predicted>, Added<Interpolated>)>, With<PlayerId>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    character_query: Query<Entity, (Or<(Added<Predicted>, Added<Interpolated>)>, With<PlayerId>)>,
 ) {
     for entity in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);
@@ -37,19 +38,27 @@ fn add_character_mesh(
 
 fn add_projectile_mesh(
     mut commands: Commands,
-    character_query: Query<Entity, (Or<(Added<Predicted>,)>, With<ProjectileId>)>,
+    character_query: Query<
+        (Entity, Has<Mesh3d>, Has<RigidBody>),
+        (Added<Predicted>, With<ProjectileId>),
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for entity in &character_query {
-        info!(?entity, "Adding cosmetics to projectile {:?}", entity);
-
+    for (entity, mesh, physics) in &character_query {
         let mut body = commands.entity(entity);
 
-        body.insert((
-            Mesh3d(meshes.add(Sphere::new(0.25))),
-            MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-            ProjectileBundle { ..default() },
-        ));
+        if !mesh {
+            info!(?entity, "Adding cosmetics to projectile {:?}", entity);
+            body.insert((
+                Mesh3d(meshes.add(Sphere::new(0.25))),
+                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+            ));
+        }
+
+        if !physics {
+            info!(?entity, "Adding physics to projectile {:?}", entity);
+            body.insert(ProjectileBundle { ..default() });
+        }
     }
 }

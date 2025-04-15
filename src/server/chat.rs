@@ -1,10 +1,7 @@
-use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
 
-use crate::protocol::component::ProjectileId;
 use crate::protocol::message::{ChatChannel, ChatMessage};
-use crate::shared::projectile::ProjectileBundle;
 
 pub struct ChatPlugin;
 

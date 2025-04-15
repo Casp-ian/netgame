@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use config::ServerConfig;
 use lightyear::{
     prelude::{
-        ReplicationConfig, ReplicationGroup,
+        ReplicationConfig,
         server::{IoConfig, NetConfig, ServerCommandsExt, ServerTransport},
     },
     server::{config::NetcodeConfig, plugin::ServerPlugins, *},
