@@ -69,7 +69,8 @@ fn read_keys(
         match &event.logical_key {
             // Handle pressing Enter to finish the input
             Key::Enter | Key::Escape => {
-                textbox.focused = false;
+                // TODO this is disabled for as long as there will be only one text box anyways, so why ever unfocus
+                // textbox.focused = false;
             }
             // Handle pressing Backspace to delete last char
             Key::Backspace => {

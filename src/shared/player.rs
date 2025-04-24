@@ -35,7 +35,7 @@ impl Plugin for PlayerPlugin {
             FixedUpdate,
             ((look_player, float_player, move_player).chain(), shoot),
         )
-        .add_systems(Update, (move_camera));
+        .add_systems(Update, move_camera);
     }
 }
 

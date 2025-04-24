@@ -1,3 +1,5 @@
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
 use bevy::prelude::*;
 use config::ServerConfig;
 use lightyear::{
@@ -8,7 +10,7 @@ use lightyear::{
     server::{config::NetcodeConfig, plugin::ServerPlugins, *},
 };
 
-use crate::shared::{SERVER_ADDR, shared_config};
+use crate::shared::shared_config;
 
 pub struct ServerNetworkPlugin;
 impl Plugin for ServerNetworkPlugin {
@@ -18,8 +20,15 @@ impl Plugin for ServerNetworkPlugin {
     }
 }
 
+const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 5000);
+
 fn start(mut commands: Commands) {
     commands.start_server();
+}
+
+// for oneshot
+pub fn stop(mut commands: Commands) {
+    commands.stop_server();
 }
 
 fn build_server_plugin() -> ServerPlugins {

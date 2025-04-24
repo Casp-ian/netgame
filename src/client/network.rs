@@ -3,7 +3,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use bevy::{prelude::*, utils::tracing::instrument::WithSubscriber};
+use bevy::prelude::*;
 use lightyear::{
     client::{
         config::{ClientConfig, NetcodeConfig},
@@ -17,7 +17,7 @@ use lightyear::{
     },
 };
 
-use crate::shared::{CLIENT_ADDR, shared_config};
+use crate::shared::shared_config;
 
 use super::{ClientGameState, menu::textbox::Textbox};
 
@@ -29,6 +29,8 @@ impl Plugin for ClientNetworkPlugin {
         app.add_systems(Update, disconnect);
     }
 }
+
+const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 4000);
 
 // oneshot
 pub fn connect(
