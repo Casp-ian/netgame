@@ -1,6 +1,9 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::tracing::instrument::WithSubscriber};
 use lightyear::{
     client::{
         config::{ClientConfig, NetcodeConfig},
@@ -8,13 +11,15 @@ use lightyear::{
     },
     prelude::{
         ClientDisconnectEvent, Key,
-        client::{Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig},
+        client::{
+            Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig, Rollback,
+        },
     },
 };
 
-use crate::shared::{CLIENT_ADDR, SERVER_ADDR, shared_config};
+use crate::shared::{CLIENT_ADDR, shared_config};
 
-use super::ClientGameState;
+use super::{ClientGameState, menu::textbox::Textbox};
 
 pub struct ClientNetworkPlugin;
 impl Plugin for ClientNetworkPlugin {
@@ -26,7 +31,19 @@ impl Plugin for ClientNetworkPlugin {
 }
 
 // oneshot
-pub fn connect(mut commands: Commands, mut game_state: ResMut<NextState<ClientGameState>>) {
+pub fn connect(
+    mut commands: Commands,
+    text: Query<&Text, With<Textbox>>,
+    mut client_config: ResMut<ClientConfig>,
+    mut game_state: ResMut<NextState<ClientGameState>>,
+) {
+    let ip: Result<Ipv4Addr, _> = text.single().0.clone().parse();
+    if let Err(e) = ip {
+        error!("{:?}", e);
+        return;
+    }
+    client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), 5000));
+
     commands.connect_client();
     game_state.set(ClientGameState::Game);
 }
@@ -42,6 +59,16 @@ fn disconnect(
 }
 
 fn build_client_plugin() -> ClientPlugins {
+    // NOTE this cant be ClientConfig::default(), because some things cant change
+    // luckily the server ip changes just fine
+    ClientPlugins::new(ClientConfig {
+        // part of the config needs to be shared between the client and server
+        shared: shared_config(),
+        ..Default::default()
+    })
+}
+
+fn netconfig(server: SocketAddr) -> NetConfig {
     let id = (SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -51,10 +78,9 @@ fn build_client_plugin() -> ClientPlugins {
 
     let mut client_addr = CLIENT_ADDR.clone();
     client_addr.set_port(id as u16);
-    // Authentication is where you specify how the client should connect to the server
-    // This is where you provide the server address.
+
     let auth = Authentication::Manual {
-        server_addr: SERVER_ADDR,
+        server_addr: server,
         client_id: id,
         private_key: Key::default(),
         protocol_id: 0,
@@ -73,11 +99,5 @@ fn build_client_plugin() -> ClientPlugins {
         io,
         config: NetcodeConfig::default(),
     };
-    let config = ClientConfig {
-        // part of the config needs to be shared between the client and server
-        shared: shared_config(),
-        net: net_config,
-        ..Default::default()
-    };
-    ClientPlugins::new(config)
+    return net_config;
 }

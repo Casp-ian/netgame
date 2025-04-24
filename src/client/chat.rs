@@ -6,6 +6,8 @@ use lightyear::prelude::*;
 
 use crate::protocol::message::{ChatChannel, ChatMessage};
 
+use super::ClientGameState;
+
 pub struct ChatPlugin;
 
 #[derive(Resource)]
@@ -21,7 +23,10 @@ impl Plugin for ChatPlugin {
             opened: false,
             message: String::new(),
         });
-        app.add_systems(Update, (print_chat, read_keys));
+        app.add_systems(
+            Update,
+            (print_chat, read_keys).run_if(in_state(ClientGameState::Game)),
+        );
     }
 }
 
