@@ -2,53 +2,148 @@ use bevy::{
     input::{ButtonState, keyboard::Key, keyboard::KeyboardInput},
     prelude::*,
 };
-use lightyear::prelude::*;
+use leafwing_input_manager::{plugin::TickActionStateSystem, prelude::ActionState};
+use lightyear::{prelude::*, shared::replication::components::Controlled};
 
-use crate::protocol::message::{ChatChannel, ChatMessage};
+use crate::protocol::{
+    input::NetworkedInput,
+    message::{ChatChannel, ChatMessage},
+};
 
 use super::ClientGameState;
 
 pub struct ChatPlugin;
 
-#[derive(Resource)]
-struct Chatting {
-    // TODO disable movement, and show chat window
-    opened: bool,
-    message: String,
-}
-
 impl Plugin for ChatPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(Chatting {
-            opened: false,
-            message: String::new(),
-        });
+        app.insert_state(ChatState::Closed);
+
+        app.add_systems(Startup, create_chat_window);
         app.add_systems(
             Update,
             (print_chat, read_keys).run_if(in_state(ClientGameState::Game)),
         );
+
+        app.add_systems(OnEnter(ChatState::Opened), open_chat);
+        app.add_systems(OnEnter(ChatState::Closed), close_chat);
     }
 }
 
-fn print_chat(mut reader: EventReader<ClientReceiveMessage<ChatMessage>>) {
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash, States)]
+pub enum ChatState {
+    Opened,
+    Closed,
+}
+
+fn open_chat(
+    mut controls: Query<&mut ActionState<NetworkedInput>, With<Controlled>>,
+    mut chat: Query<&mut Visibility, Or<(With<ChatField>, With<ChatLog>)>>,
+) {
+    for mut vis in chat.iter_mut() {
+        *vis = Visibility::Visible;
+    }
+    if let Ok(mut control) = controls.get_single_mut() {
+        // TODO
+        // Enable and disable work 90% of the time...
+        // it might be system ordering or networking causing it
+        ActionState::disable(&mut control);
+    }
+}
+
+fn close_chat(
+    mut controls: Query<&mut ActionState<NetworkedInput>, With<Controlled>>,
+    mut chat: Query<&mut Visibility, Or<(With<ChatField>, With<ChatLog>)>>,
+) {
+    for mut vis in chat.iter_mut() {
+        *vis = Visibility::Hidden;
+    }
+    if let Ok(mut control) = controls.get_single_mut() {
+        ActionState::enable(&mut control);
+    }
+}
+
+#[derive(Component)]
+struct ChatField;
+#[derive(Component)]
+struct ChatLog;
+
+fn create_chat_window(mut commands: Commands) {
+    commands
+        .spawn((Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            // align_items: AlignItems::Center,
+            // justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            ..default()
+        },))
+        .with_children(|parent| {
+            parent.spawn((
+                ChatField,
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(10.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                Text::default(),
+                TextFont {
+                    font_size: 33.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            ));
+
+            parent.spawn((
+                ChatLog,
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(90.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                Text::default(),
+                TextFont {
+                    font_size: 33.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            ));
+        });
+}
+
+fn print_chat(
+    mut chatlog: Query<&mut Text, With<ChatLog>>,
+    mut reader: EventReader<ClientReceiveMessage<ChatMessage>>,
+) {
+    let mut log = chatlog.single_mut();
     for event in reader.read() {
-        info!("Received message: {}", event.message().text);
+        log.push_str(&event.message().text);
+        log.push('\n');
     }
 }
 
 fn read_keys(
     mut client: ResMut<ClientConnectionManager>,
-    mut chatting: ResMut<Chatting>,
+
+    state: Res<State<ChatState>>,
+    mut next_state: ResMut<NextState<ChatState>>,
+    mut chat_field: Query<&mut Text, With<ChatField>>,
+
     mut buttons: EventReader<KeyboardInput>,
 ) {
+    let mut text = chat_field.single_mut();
+
     for event in buttons.read() {
         if event.state == ButtonState::Released {
             continue;
         }
 
-        if !chatting.opened {
+        if state.get() == &ChatState::Closed {
             if event.logical_key == Key::Enter {
-                chatting.opened = true;
+                next_state.set(ChatState::Opened);
             }
             continue;
         }
@@ -56,20 +151,22 @@ fn read_keys(
         match &event.logical_key {
             // Handle pressing Enter to finish the input
             Key::Enter => {
-                client
-                    .send_message::<ChatChannel, ChatMessage>(&ChatMessage {
-                        text: chatting.message.clone(),
-                    })
-                    .unwrap();
-                chatting.message.clear();
-                chatting.opened = false;
+                if text.0.len() > 0 {
+                    client
+                        .send_message::<ChatChannel, ChatMessage>(&ChatMessage {
+                            text: text.0.clone(),
+                        })
+                        .unwrap();
+                }
+                text.0.clear();
+                next_state.set(ChatState::Closed);
             }
             // Handle pressing Backspace to delete last char
             Key::Backspace => {
-                chatting.message.pop();
+                text.0.pop();
             }
             Key::Space => {
-                chatting.message.push(' ');
+                text.0.push(' ');
             }
             // Handle key presses that produce text characters
             Key::Character(input) => {
@@ -77,7 +174,7 @@ fn read_keys(
                 if input.chars().any(|c| c.is_control()) {
                     continue;
                 }
-                chatting.message.push_str(&input);
+                text.0.push_str(&input);
             }
             _ => {}
         } // if button == &Key::Return {}

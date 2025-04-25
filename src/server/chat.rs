@@ -21,6 +21,10 @@ fn forward_chat(
 ) {
     for event in events.read() {
         let text = &event.message().text;
+        if text.len() == 0 {
+            continue;
+        }
+
         let mut chars = text.chars();
         if chars.next().unwrap() == '/' {
             let command: String = chars.collect();

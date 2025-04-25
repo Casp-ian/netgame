@@ -24,14 +24,14 @@ fn handle_new_character(
     for (entity, is_controlled) in &mut character_query {
         if is_controlled {
             info!("Adding InputMap to controlled and predicted entity {entity:?}");
-            commands.entity(entity).insert(
-                InputMap::new([
+            commands
+                .entity(entity)
+                .insert((InputMap::<NetworkedInput>::new([
                     (NetworkedInput::Jump, KeyCode::Space),
                     (NetworkedInput::Fire, KeyCode::KeyQ),
                 ])
                 .with_dual_axis(NetworkedInput::Move, VirtualDPad::wasd())
-                .with_dual_axis(NetworkedInput::Look, MouseMove::default()),
-            );
+                .with_dual_axis(NetworkedInput::Look, MouseMove::default()),));
         } else {
             info!("Remote character replicated to us: {entity:?}");
         }
