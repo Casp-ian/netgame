@@ -69,14 +69,17 @@ struct ChatLog;
 
 fn create_chat_window(mut commands: Commands) {
     commands
-        .spawn((Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            // align_items: AlignItems::Center,
-            // justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            ..default()
-        },))
+        .spawn((
+            Visibility::Hidden,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                // align_items: AlignItems::Center,
+                // justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+        ))
         .with_children(|parent| {
             parent.spawn((
                 ChatField,

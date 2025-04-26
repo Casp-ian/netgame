@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::protocol::{REPLICATION_GROUP, component::ProjectileId, input::NetworkedInput};
 
-use super::projectile::ProjectileBundle;
+use super::{casting::Caster, projectile::ProjectileBundle};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum PlayerState {
@@ -33,7 +33,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            ((look_player, float_player, move_player).chain(), shoot),
+            (look_player, float_player, move_player).chain(),
         )
         .add_systems(Update, move_camera);
     }
@@ -124,60 +124,6 @@ fn move_player(mut qp: Query<(&ActionState<NetworkedInput>, &mut LinearVelocity,
     }
 }
 
-fn shoot(
-    mut commands: Commands,
-    qp: Query<
-        (
-            &ActionState<NetworkedInput>,
-            &LinearVelocity,
-            &Transform,
-            &Player,
-        ),
-        With<LinearVelocity>,
-    >,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    for (action, vel, pos, player) in qp.iter() {
-        if action.pressed(&NetworkedInput::Fire) {
-            let distance = 1.;
-            let speed = 5.;
-            let up_speed = 5.;
-
-            let player_pos = pos.translation;
-
-            let quat_x = Quat::from_axis_angle(Vec3::Y, player.look_dir.x);
-            let quat_y = Quat::from_axis_angle(quat_x.mul_vec3(Vec3::X), player.look_dir.y);
-
-            let pos_diff = quat_x.mul_vec3(Vec3::Z * distance);
-            let vel_diff = quat_y.mul_vec3(quat_x.mul_vec3(Vec3::Z * speed + Vec3::Y * up_speed));
-
-            let spawn_pos: Vec3 = player_pos + pos_diff;
-
-            let replicate = ServerReplicate {
-                group: REPLICATION_GROUP,
-                sync: server::SyncTarget {
-                    prediction: NetworkTarget::All,
-                    interpolation: NetworkTarget::None,
-                },
-                ..default()
-            };
-
-            commands.spawn((
-                replicate,
-                PreSpawnedPlayerObject::default(),
-                ProjectileId { id: 0 },
-                Transform::from_translation(spawn_pos),
-                ProjectileBundle { ..default() },
-                LinearVelocity(vel_diff + vel.0),
-                Mesh3d(meshes.add(Sphere::new(0.25))),
-                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-            ));
-        }
-        // test
-    }
-}
-
 pub fn move_camera(
     qp: Query<(&Transform, &mut Player), With<Controlled>>,
     mut qc: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
@@ -205,6 +151,7 @@ pub fn move_camera(
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub player: Player,
+    pub caster: Caster,
     pub rigid_body: RigidBody,
     pub collider: Collider,
     pub locked_axes: LockedAxes,
@@ -221,6 +168,7 @@ impl Default for PlayerBundle {
                 look_dir: Vec2::default(),
             },
 
+            caster: Caster::new(),
             rigid_body: RigidBody::Dynamic,
             collider: Collider::capsule(0.25, 0.1),
             locked_axes: LockedAxes::ROTATION_LOCKED,

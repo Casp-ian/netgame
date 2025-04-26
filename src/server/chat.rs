@@ -36,7 +36,7 @@ fn forward_chat(
         connection_manager
             .send_message_to_target::<ChatChannel, ChatMessage>(
                 &ChatMessage {
-                    text: format!("[{}]: {}", event.from(), event.message().text).to_string(),
+                    text: format!("{}: {}", event.from(), event.message().text).to_string(),
                 },
                 NetworkTarget::All,
             )

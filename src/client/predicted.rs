@@ -17,22 +17,30 @@ impl Plugin for PredictedPlugin {
 
 fn add_character_mesh(
     mut commands: Commands,
-    character_query: Query<Entity, (Or<(Added<Predicted>, Added<Interpolated>)>, With<PlayerId>)>,
+    character_query: Query<
+        (Entity, Has<Mesh3d>, Has<RigidBody>),
+        (Added<Predicted>, With<PlayerId>),
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for entity in &character_query {
+    for (entity, mesh, physics) in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);
 
         let mut body = commands.entity(entity);
 
-        body.insert((
-            Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
-            MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
-            PlayerBundle {
+        if !mesh {
+            body.insert((
+                Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
+                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+            ));
+        }
+
+        if !physics {
+            body.insert((PlayerBundle {
                 ..Default::default()
-            },
-        ));
+            },));
+        }
     }
 }
 

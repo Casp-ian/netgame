@@ -11,9 +11,7 @@ use lightyear::{
     },
     prelude::{
         ClientDisconnectEvent, Key,
-        client::{
-            Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig, Rollback,
-        },
+        client::{Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig},
     },
 };
 
