@@ -33,6 +33,7 @@ fn forward_chat(
                 commands.run_system(*system);
             }
         }
+
         connection_manager
             .send_message_to_target::<ChatChannel, ChatMessage>(
                 &ChatMessage {

@@ -20,7 +20,7 @@ impl Plugin for ServerNetworkPlugin {
     }
 }
 
-const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 5000);
+const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 5000);
 
 fn start(mut commands: Commands) {
     commands.start_server();

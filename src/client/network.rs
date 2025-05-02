@@ -28,7 +28,7 @@ impl Plugin for ClientNetworkPlugin {
     }
 }
 
-const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 4000);
+const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 0);
 
 // oneshot
 pub fn connect(
@@ -37,11 +37,14 @@ pub fn connect(
     mut client_config: ResMut<ClientConfig>,
     mut game_state: ResMut<NextState<ClientGameState>>,
 ) {
+    // TODO text parsing, for port as well
     let ip: Result<Ipv4Addr, _> = text.single().0.clone().parse();
+
     if let Err(e) = ip {
         error!("{:?}", e);
         return;
     }
+
     client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), 5000));
 
     commands.connect_client();
@@ -49,10 +52,10 @@ pub fn connect(
 }
 
 fn disconnect(
-    mut connections: EventReader<ClientDisconnectEvent>,
+    mut disconnections: EventReader<ClientDisconnectEvent>,
     mut game_state: ResMut<NextState<ClientGameState>>,
 ) {
-    for event in connections.read() {
+    for event in disconnections.read() {
         info!("{:?}", event);
         game_state.set(ClientGameState::MainMenu);
     }
@@ -76,8 +79,7 @@ fn netconfig(server: SocketAddr) -> NetConfig {
         % 1000)
         + 4000;
 
-    let mut client_addr = CLIENT_ADDR.clone();
-    client_addr.set_port(id as u16);
+    // client_addr.set_port(id as u16);
 
     let auth = Authentication::Manual {
         server_addr: server,
@@ -85,10 +87,11 @@ fn netconfig(server: SocketAddr) -> NetConfig {
         private_key: Key::default(),
         protocol_id: 0,
     };
+
     // The IoConfig will specify the transport to use.
     let io = IoConfig {
         // the address specified here is the client_address, because we open a UDP socket on the client
-        transport: ClientTransport::UdpSocket(client_addr),
+        transport: ClientTransport::UdpSocket(CLIENT_ADDR),
         ..Default::default()
     };
     // The NetConfig specifies how we establish a connection with the server.

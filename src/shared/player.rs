@@ -3,11 +3,7 @@ use std::f32::consts::PI;
 use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody, ShapeCaster, ShapeHits};
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
-use lightyear::{
-    prelude::*,
-    prelude::{NetworkTarget, PreSpawnedPlayerObject, ServerReplicate},
-    shared::replication::components::Controlled,
-};
+use lightyear::shared::replication::components::Controlled;
 use serde::{Deserialize, Serialize};
 
 use crate::protocol::{REPLICATION_GROUP, component::ProjectileId, input::NetworkedInput};
@@ -131,7 +127,6 @@ pub fn move_camera(
     if qp.is_empty() || qc.is_empty() {
         return;
     }
-
     let distance = 5.;
 
     let (player_transform, player) = qp.iter().last().unwrap();

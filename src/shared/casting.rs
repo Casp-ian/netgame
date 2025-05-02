@@ -3,7 +3,11 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 use lightyear::prelude::*;
 
-use crate::protocol::{REPLICATION_GROUP, component::ProjectileId, input::NetworkedInput};
+use crate::protocol::{
+    REPLICATION_GROUP,
+    component::{PlayerId, ProjectileId},
+    input::NetworkedInput,
+};
 
 use super::{player::Player, projectile::ProjectileBundle};
 
@@ -12,7 +16,6 @@ pub struct CastingPlugin;
 impl Plugin for CastingPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(FixedUpdate, (chant, cast).chain());
-        // app.add_systems(Update, move_camera);
     }
 }
 
@@ -41,11 +44,14 @@ fn chant(mut qp: Query<(&ActionState<NetworkedInput>, &mut Caster)>) {
 
 fn cast(
     mut commands: Commands,
-    mut qp: Query<(&LinearVelocity, &Transform, &Player, &mut Caster), With<LinearVelocity>>,
+    mut qp: Query<
+        (&LinearVelocity, &Transform, &Player, &PlayerId, &mut Caster),
+        With<LinearVelocity>,
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (vel, pos, player, mut caster) in qp.iter_mut() {
+    for (vel, pos, player, player_id, mut caster) in qp.iter_mut() {
         if caster.spell {
             caster.spell = false;
 
@@ -72,13 +78,18 @@ fn cast(
                 ..default()
             };
 
+            // the default hashing algorithm uses the tick and component list. in order to disambiguate
+            // between two players spawning a bullet on the same tick, we add client_id to the mix.
+            let prespawned = PreSpawnedPlayerObject::default_with_salt(player_id.id.to_bits());
+
             commands.spawn((
                 replicate,
-                PreSpawnedPlayerObject::default(),
+                prespawned,
                 ProjectileId { id: 0 },
                 Transform::from_translation(spawn_pos),
                 ProjectileBundle { ..default() },
                 LinearVelocity(vel_diff + vel.0),
+                // NOTE could make gui feature
                 Mesh3d(meshes.add(Sphere::new(0.25))),
                 MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             ));
