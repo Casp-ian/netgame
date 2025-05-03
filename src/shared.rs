@@ -3,6 +3,7 @@ use lightyear::prelude::{SharedConfig, TickConfig};
 use std::time::Duration;
 
 pub mod casting;
+pub mod enemy;
 pub mod map;
 pub mod player;
 pub mod projectile;
@@ -14,7 +15,12 @@ pub struct SharedPlugins;
 
 impl Plugin for SharedPlugins {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugins((casting::CastingPlugin, map::MapPlugin, player::PlayerPlugin));
+        app.add_plugins((
+            casting::CastingPlugin,
+            enemy::EnemyPlugin,
+            map::MapPlugin,
+            player::PlayerPlugin,
+        ));
     }
 }
 

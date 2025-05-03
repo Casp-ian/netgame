@@ -2,6 +2,7 @@ use bevy::{ecs::system::SystemId, prelude::*, utils::HashMap};
 
 #[derive(Resource)]
 pub struct ClientOneshotSystems {
+    // TODO this could probably just be a slice, with an enum for every index
     pub list: HashMap<String, SystemId>,
 }
 

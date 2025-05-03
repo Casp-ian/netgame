@@ -1,14 +1,28 @@
 use std::f32::consts::PI;
 
-use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody, ShapeCaster, ShapeHits};
+use avian3d::prelude::{
+    Collider, LinearVelocity, LockedAxes, Restitution, RigidBody, ShapeCaster, ShapeHits,
+};
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 use lightyear::shared::replication::components::Controlled;
 use serde::{Deserialize, Serialize};
 
-use crate::protocol::{REPLICATION_GROUP, component::ProjectileId, input::NetworkedInput};
+use crate::protocol::input::NetworkedInput;
 
-use super::{casting::Caster, projectile::ProjectileBundle};
+use super::casting::Caster;
+
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            FixedUpdate,
+            (look_player, float_player, move_player).chain(),
+        )
+        .add_systems(Update, move_camera);
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum PlayerState {
@@ -21,18 +35,6 @@ pub enum PlayerState {
 pub struct Player {
     pub state: PlayerState,
     pub look_dir: Vec2,
-}
-
-pub struct PlayerPlugin;
-
-impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            FixedUpdate,
-            (look_player, float_player, move_player).chain(),
-        )
-        .add_systems(Update, move_camera);
-    }
 }
 
 // TODO this probably should be in update, to make camera movement smooth to framerate, but it breaks determinism
@@ -148,6 +150,7 @@ pub struct PlayerBundle {
     pub player: Player,
     pub caster: Caster,
     pub rigid_body: RigidBody,
+    pub restitution: Restitution,
     pub collider: Collider,
     pub locked_axes: LockedAxes,
     pub visibility: Visibility,
@@ -165,6 +168,7 @@ impl Default for PlayerBundle {
 
             caster: Caster::new(),
             rigid_body: RigidBody::Dynamic,
+            restitution: Restitution::new(0.1),
             collider: Collider::capsule(0.25, 0.1),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             visibility: Visibility::Visible,

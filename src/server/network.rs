@@ -29,6 +29,8 @@ fn start(mut commands: Commands) {
 // for oneshot
 pub fn stop(mut commands: Commands) {
     commands.stop_server();
+    // NOTE should probably fully stop or something
+    commands.start_server();
 }
 
 fn build_server_plugin() -> ServerPlugins {
