@@ -1,8 +1,5 @@
 use bevy::prelude::*;
-use lightyear::{
-    prelude::*,
-    shared::{events::message::ReceiveMessage, sets::ServerMarker},
-};
+use lightyear::prelude::*;
 
 use crate::protocol::message::{ChatChannel, ChatMessage};
 

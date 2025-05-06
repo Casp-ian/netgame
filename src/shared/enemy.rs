@@ -61,7 +61,7 @@ fn agro(
     players: Query<&Position, With<Player>>,
     mut enemies: Query<(&Position, &mut Enemy)>,
 ) {
-    for (enemy_pos, mut enemy) in enemies.iter_mut() {
+    for (_, mut enemy) in enemies.iter_mut() {
         let closest_player_pos = players.iter().next();
         if let Some(player_pos) = closest_player_pos {
             enemy.goal_pos = player_pos.0;

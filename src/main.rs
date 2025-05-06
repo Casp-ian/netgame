@@ -1,15 +1,17 @@
 use avian3d::PhysicsPlugins;
-use bevy::{
-    prelude::*,
-    winit::{UpdateMode::Continuous, WinitSettings},
-};
+use bevy::diagnostic::DiagnosticsPlugin;
+use bevy::prelude::*;
+use bevy::winit::{UpdateMode::Continuous, WinitSettings};
 
 mod protocol;
 
 #[cfg(feature = "client")]
 mod client;
+
 #[cfg(feature = "server")]
 mod server;
+#[cfg(feature = "server")]
+use bevy::{log::LogPlugin, state::app::StatesPlugin};
 
 mod shared;
 use shared::SharedPlugins;
@@ -38,16 +40,17 @@ fn main() {
     #[cfg(feature = "server")]
     app.add_plugins((
         // Default
-        DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Server".to_string(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }),
-        // MinimalPlugins,
-        // StatesPlugin,
-        // LogPlugin::default(),
+        // DefaultPlugins.set(WindowPlugin {
+        //     primary_window: Some(Window {
+        //         title: "Server".to_string(),
+        //         ..Default::default()
+        //     }),
+        //     ..Default::default()
+        // }),
+        MinimalPlugins,
+        StatesPlugin,
+        LogPlugin::default(),
+        DiagnosticsPlugin,
         PhysicsPlugins::default(),
         server::ServerPlugins,
     ));

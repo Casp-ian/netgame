@@ -27,10 +27,9 @@ fn start(mut commands: Commands) {
 }
 
 // for oneshot
-pub fn stop(mut commands: Commands) {
+pub fn stop(mut exit: EventWriter<AppExit>, mut commands: Commands) {
     commands.stop_server();
-    // NOTE should probably fully stop or something
-    commands.start_server();
+    exit.send(AppExit::Success);
 }
 
 fn build_server_plugin() -> ServerPlugins {

@@ -21,9 +21,6 @@ fn handle_connections(
     mut connection_manager: ResMut<lightyear::prelude::server::ConnectionManager>,
     mut connections: EventReader<ServerConnectEvent>,
 
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-
     mut commands: Commands,
 ) {
     for connection in connections.read() {
@@ -64,8 +61,6 @@ fn handle_connections(
             .unwrap();
 
         let player = (
-            Mesh3d(meshes.add(Capsule3d::new(0.25, 0.1))),
-            MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             PlayerId { id: client_id },
             PlayerBundle {
                 ..Default::default()

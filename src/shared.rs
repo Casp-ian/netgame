@@ -20,6 +20,7 @@ impl Plugin for SharedPlugins {
             enemy::EnemyPlugin,
             map::MapPlugin,
             player::PlayerPlugin,
+            projectile::ProjectilePlugin,
         ));
     }
 }

@@ -4,10 +4,7 @@ use lightyear::prelude::client::ComponentSyncMode;
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::{
-    enemy::{Enemy, EnemyBundle},
-    player::Player,
-};
+use crate::shared::{casting::Caster, enemy::Enemy, player::Player};
 
 pub fn register_components(app: &mut App) {
     // General positional
@@ -27,6 +24,9 @@ pub fn register_components(app: &mut App) {
 
     // Player
     app.register_component::<Player>(ChannelDirection::ServerToClient)
+        .add_prediction(ComponentSyncMode::Full);
+
+    app.register_component::<Caster>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Full);
 
     app.register_component::<Enemy>(ChannelDirection::ServerToClient)

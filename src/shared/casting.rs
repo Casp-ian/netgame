@@ -19,7 +19,7 @@ impl Plugin for CastingPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Caster {
     spell: bool,
     timer: f32,
@@ -33,8 +33,18 @@ impl Caster {
     }
 }
 
-fn chant(mut qp: Query<(&ActionState<NetworkedInput>, &mut Caster)>) {
+fn chant(
+    // a
+    time: Res<Time>,
+    mut qp: Query<(&ActionState<NetworkedInput>, &mut Caster)>,
+) {
     for (action, mut caster) in qp.iter_mut() {
+        caster.timer += time.delta_secs();
+
+        if caster.timer < 0.0 {
+            continue;
+        }
+
         if action.pressed(&NetworkedInput::Fire) {
             caster.spell = true;
             caster.timer = 0.0;
@@ -48,12 +58,16 @@ fn cast(
         (&LinearVelocity, &Transform, &Player, &PlayerId, &mut Caster),
         With<LinearVelocity>,
     >,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut meshes: ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let cast_time: f32 = 0.5;
+    let cooldown: f32 = 0.0;
+
     for (vel, pos, player, player_id, mut caster) in qp.iter_mut() {
-        if caster.spell {
+        if caster.spell && caster.timer >= cast_time {
             caster.spell = false;
+            caster.timer = -cooldown;
 
             let distance = 1.;
             let speed = 5.;
@@ -90,8 +104,8 @@ fn cast(
                 ProjectileBundle { ..default() },
                 LinearVelocity(vel_diff + vel.0),
                 // NOTE could make gui feature
-                Mesh3d(meshes.add(Sphere::new(0.25))),
-                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+                // Mesh3d(meshes.add(Sphere::new(0.25))),
+                // MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
             ));
         }
         // test
