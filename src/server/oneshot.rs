@@ -1,12 +1,13 @@
-use bevy::{ecs::system::SystemId, prelude::*, utils::HashMap};
+use bevy::{ecs::system::SystemId, prelude::*};
 use lightyear::prelude::{NetworkTarget, ServerReplicate, server};
+use std::collections::HashMap;
 
 use crate::{
     protocol::{
         REPLICATION_GROUP,
         component::{EnemyId, ProjectileId},
     },
-    shared::{enemy::EnemyBundle, projectile::ProjectileBundle},
+    shared::{enemy::EnemyBundle, projectile::Projectile},
 };
 
 #[derive(Resource)]
@@ -55,7 +56,7 @@ fn spawn_ball(
         replicate,
         ProjectileId { id: 0 },
         Transform::from_xyz(0.0, 5.0, 0.0),
-        ProjectileBundle { ..default() },
+        Projectile::default(),
         // NOTE could make gui feature
         // Mesh3d(meshes.add(Sphere::new(0.25))),
         // MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),

@@ -1,5 +1,4 @@
 use avian3d::PhysicsPlugins;
-use bevy::diagnostic::DiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy::winit::{UpdateMode::Continuous, WinitSettings};
 
@@ -10,6 +9,8 @@ mod client;
 
 #[cfg(feature = "server")]
 mod server;
+#[cfg(feature = "server")]
+use bevy::diagnostic::DiagnosticsPlugin;
 #[cfg(feature = "server")]
 use bevy::{log::LogPlugin, state::app::StatesPlugin};
 

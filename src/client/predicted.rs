@@ -1,17 +1,13 @@
-use std::any::Any;
-
 use avian3d::prelude::RigidBody;
 use bevy::prelude::*;
 use lightyear::prelude::client::*;
-use lightyear::shared::replication::components::Controlled;
 
 use crate::protocol::component::EnemyId;
 use crate::protocol::component::PlayerId;
 use crate::protocol::component::ProjectileId;
 use crate::shared::enemy::EnemyBundle;
-use crate::shared::player::Player;
 use crate::shared::player::PlayerBundle;
-use crate::shared::projectile::ProjectileBundle;
+use crate::shared::projectile::Projectile;
 
 pub struct PredictedPlugin;
 
@@ -76,7 +72,7 @@ fn add_projectile_mesh(
 
         if !physics {
             info!(?entity, "Adding physics to projectile {:?}", entity);
-            body.insert(ProjectileBundle { ..default() });
+            body.insert(Projectile::default());
         }
     }
 }
@@ -126,7 +122,7 @@ fn turn_billboard(
     mut boards: Query<&mut Transform, With<Billboard>>,
     player: Query<&GlobalTransform, (With<Camera3d>, Without<Billboard>)>,
 ) {
-    if let Ok(camera_pos) = player.get_single() {
+    if let Ok(camera_pos) = player.single() {
         for mut transform in boards.iter_mut() {
             let dir: Vec3 = transform.translation - camera_pos.translation();
             transform.look_to(dir, Vec3::Y);

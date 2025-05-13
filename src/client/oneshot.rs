@@ -1,4 +1,5 @@
-use bevy::{ecs::system::SystemId, prelude::*, utils::HashMap};
+use bevy::{ecs::system::SystemId, prelude::*};
+use std::collections::HashMap;
 
 #[derive(Resource)]
 pub struct ClientOneshotSystems {

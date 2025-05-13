@@ -35,7 +35,7 @@ fn handle_new_character(
         } else {
             info!("Remote character replicated to us: {entity:?}");
         }
-        let client_id = connection.client.id();
+        let _client_id = connection.client.id();
         // info!(?entity, ?client_id, "Adding physics to character");
         // commands.entity(entity).insert(PlayerBundle::default());
     }

@@ -38,7 +38,7 @@ pub fn connect(
     mut game_state: ResMut<NextState<ClientGameState>>,
 ) {
     // TODO text parsing, for port as well
-    let ip: Result<Ipv4Addr, _> = text.single().0.clone().parse();
+    let ip: Result<Ipv4Addr, _> = text.single().unwrap().0.clone().parse();
 
     if let Err(e) = ip {
         error!("{:?}", e);

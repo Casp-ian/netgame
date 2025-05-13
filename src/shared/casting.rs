@@ -9,7 +9,7 @@ use crate::protocol::{
     input::NetworkedInput,
 };
 
-use super::{player::Player, projectile::ProjectileBundle};
+use super::{player::Player, projectile::Projectile};
 
 pub struct CastingPlugin;
 
@@ -92,14 +92,14 @@ fn cast(
 
             // the default hashing algorithm uses the tick and component list. in order to disambiguate
             // between two players spawning a bullet on the same tick, we add client_id to the mix.
-            let prespawned = PreSpawnedPlayerObject::default_with_salt(player_id.id.to_bits());
+            let prespawned = PreSpawned::default_with_salt(player_id.id.to_bits());
 
             commands.spawn((
                 replicate,
                 prespawned,
                 ProjectileId { id: 0 },
                 Transform::from_translation(spawn_pos),
-                ProjectileBundle { ..default() },
+                Projectile::default(),
                 LinearVelocity(vel_diff + vel.0),
                 // NOTE could make gui feature
                 // Mesh3d(meshes.add(Sphere::new(0.25))),

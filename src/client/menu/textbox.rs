@@ -32,7 +32,7 @@ impl Default for Textbox {
 }
 
 fn focus_textbox(
-    mut interaction_query: Query<(&Interaction, &mut Textbox, Entity), (Changed<Interaction>)>,
+    mut interaction_query: Query<(&Interaction, &mut Textbox, Entity), Changed<Interaction>>,
 ) {
     for (interaction, mut textbox, entity) in &mut interaction_query {
         match *interaction {
@@ -64,7 +64,7 @@ fn read_keys(
             continue;
         }
 
-        let (mut text, mut textbox) = result.unwrap();
+        let (mut text, _) = result.unwrap();
 
         match &event.logical_key {
             // Handle pressing Enter to finish the input

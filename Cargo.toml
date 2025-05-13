@@ -31,7 +31,7 @@ opt-level = "s"
 strip = "debuginfo"
 
 [dependencies]
-avian3d = { version = "0.2.0", default-features = false, features = [
+avian3d = { version = "0.3.0", default-features = false, features = [
   "3d",
   "f32",
   "parry-f32",
@@ -40,13 +40,14 @@ avian3d = { version = "0.2.0", default-features = false, features = [
   "enhanced-determinism"
 ]}
 
-bevy = { version = "0.15.3"}
-leafwing-input-manager = "0.16.0"
+bevy = { version = "0.16.0"}
+leafwing-input-manager = "0.17.0"
 
 # TODO really shouldt rely on main probably
-lightyear = { git = "https://github.com/cBournhonesque/lightyear", branch = "main", features = [
+lightyear = { version = "0.20.2", features = [
   "avian3d",
   "leafwing",
+  "udp",
 ] }
 
 serde = "1.0.219"

@@ -133,7 +133,7 @@ pub fn move_camera(
     let distance = 5.;
 
     let (player_transform, player) = qp.iter().last().unwrap();
-    let mut camera_transform = qc.single_mut();
+    let mut camera_transform = qc.single_mut().unwrap();
 
     let player_pos = player_transform.translation;
 

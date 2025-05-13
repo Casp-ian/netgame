@@ -2,7 +2,7 @@ use bevy::{
     input::{ButtonState, keyboard::Key, keyboard::KeyboardInput},
     prelude::*,
 };
-use leafwing_input_manager::{plugin::TickActionStateSystem, prelude::ActionState};
+use leafwing_input_manager::prelude::ActionState;
 use lightyear::{prelude::*, shared::replication::components::Controlled};
 
 use crate::protocol::{
@@ -42,7 +42,7 @@ fn open_chat(
     for mut vis in chat.iter_mut() {
         *vis = Visibility::Visible;
     }
-    if let Ok(mut control) = controls.get_single_mut() {
+    if let Ok(mut control) = controls.single_mut() {
         // TODO
         // Enable and disable work 90% of the time...
         // it might be system ordering or networking causing it
@@ -57,7 +57,7 @@ fn close_chat(
     for mut vis in chat.iter_mut() {
         *vis = Visibility::Hidden;
     }
-    if let Ok(mut control) = controls.get_single_mut() {
+    if let Ok(mut control) = controls.single_mut() {
         ActionState::enable(&mut control);
     }
 }
@@ -121,7 +121,7 @@ fn print_chat(
     mut chatlog: Query<&mut Text, With<ChatLog>>,
     mut reader: EventReader<ClientReceiveMessage<ChatMessage>>,
 ) {
-    let mut log = chatlog.single_mut();
+    let mut log = chatlog.single_mut().unwrap();
     for event in reader.read() {
         log.push_str(&event.message().text);
         log.push('\n');
@@ -137,7 +137,7 @@ fn read_keys(
 
     mut buttons: EventReader<KeyboardInput>,
 ) {
-    let mut text = chat_field.single_mut();
+    let mut text = chat_field.single_mut().unwrap();
 
     for event in buttons.read() {
         if event.state == ButtonState::Released {

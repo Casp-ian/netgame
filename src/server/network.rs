@@ -29,7 +29,7 @@ fn start(mut commands: Commands) {
 // for oneshot
 pub fn stop(mut exit: EventWriter<AppExit>, mut commands: Commands) {
     commands.stop_server();
-    exit.send(AppExit::Success);
+    exit.write(AppExit::Success);
 }
 
 fn build_server_plugin() -> ServerPlugins {
