@@ -58,8 +58,6 @@ fn cast(
         (&LinearVelocity, &Transform, &Player, &PlayerId, &mut Caster),
         With<LinearVelocity>,
     >,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let cast_time: f32 = 0.5;
     let cooldown: f32 = 0.0;

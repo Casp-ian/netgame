@@ -99,7 +99,7 @@ fn add_enemy_mesh(
             base_color_texture: Some(image_handle.clone()),
             alpha_mode: AlphaMode::Blend,
             unlit: true,
-            // double_sided: true,
+            // double_sided: true, // This doesnt seem to work anyways
             ..default()
         });
 

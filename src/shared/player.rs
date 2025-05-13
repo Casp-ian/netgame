@@ -32,6 +32,7 @@ pub enum PlayerState {
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[require(Transform)]
+// TODO required components can have default constructors :)
 pub struct Player {
     pub state: PlayerState,
     pub look_dir: Vec2,

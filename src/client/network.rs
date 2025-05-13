@@ -45,7 +45,7 @@ pub fn connect(
         return;
     }
 
-    client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), 5000));
+    client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), 25565));
 
     commands.connect_client();
     game_state.set(ClientGameState::Game);
