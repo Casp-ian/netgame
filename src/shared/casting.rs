@@ -9,7 +9,7 @@ use crate::protocol::{
     input::NetworkedInput,
 };
 
-use super::{player::Player, projectile::Projectile};
+use super::{player::Player, projectile::ProjectileBundle};
 
 pub struct CastingPlugin;
 
@@ -99,7 +99,7 @@ fn cast(
                 prespawned,
                 ProjectileId { id: 0 },
                 Transform::from_translation(spawn_pos),
-                Projectile::default(),
+                ProjectileBundle::default(),
                 LinearVelocity(vel_diff + vel.0),
                 // NOTE could make gui feature
                 // Mesh3d(meshes.add(Sphere::new(0.25))),

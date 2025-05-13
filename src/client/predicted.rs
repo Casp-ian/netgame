@@ -7,7 +7,7 @@ use crate::protocol::component::PlayerId;
 use crate::protocol::component::ProjectileId;
 use crate::shared::enemy::EnemyBundle;
 use crate::shared::player::PlayerBundle;
-use crate::shared::projectile::Projectile;
+use crate::shared::projectile::ProjectileBundle;
 
 pub struct PredictedPlugin;
 
@@ -43,9 +43,7 @@ fn add_character_mesh(
         }
 
         if !physics {
-            body.insert((PlayerBundle {
-                ..Default::default()
-            },));
+            body.insert(PlayerBundle::default());
         }
     }
 }
@@ -65,14 +63,14 @@ fn add_projectile_mesh(
         if !mesh {
             info!(?entity, "Adding cosmetics to projectile {:?}", entity);
             body.insert((
-                Mesh3d(meshes.add(Sphere::new(0.25))),
-                MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
+                Mesh3d(meshes.add(Sphere::new(0.75))),
+                MeshMaterial3d(materials.add(Color::srgb(0.5, 0.4, 0.4))),
             ));
         }
 
         if !physics {
             info!(?entity, "Adding physics to projectile {:?}", entity);
-            body.insert(Projectile::default());
+            body.insert(ProjectileBundle::default());
         }
     }
 }

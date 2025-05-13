@@ -20,17 +20,8 @@ fn despawn_projectile(mut commands: Commands, mut projectiles: Query<(Entity, &m
 }
 
 #[derive(Component)]
-#[require(RigidBody = RigidBody::Dynamic)]
-#[require(Restitution = Restitution::new(0.8))]
-#[require(Collider = Collider::sphere(0.25))]
 pub struct Projectile {
     pub bounces: i32,
-}
-
-impl Default for Projectile {
-    fn default() -> Self {
-        Projectile { bounces: 300 }
-    }
 }
 
 #[derive(Bundle)]
@@ -48,7 +39,7 @@ impl Default for ProjectileBundle {
             projectile: Projectile { bounces: 300 },
             rigid_body: RigidBody::Dynamic,
             restitution: Restitution::new(0.8),
-            collider: Collider::sphere(0.25),
+            collider: Collider::sphere(0.75),
         }
     }
 }

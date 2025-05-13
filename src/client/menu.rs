@@ -1,61 +1,28 @@
-use bevy::{ecs::system::SystemId, prelude::*};
+use bevy::prelude::*;
 use textbox::Textbox;
 
 use super::{ClientGameState, oneshot::ClientOneshotSystems};
 
+pub mod button;
 pub mod textbox;
+
+use button::ButtonEffect;
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(textbox::TextboxPlugin);
+        app.add_plugins(button::ButtonPlugin);
+
         app.add_systems(Startup, setup)
-            .add_systems(Update, button_system)
             .add_systems(OnExit(ClientGameState::MainMenu), hide_menu)
             .add_systems(OnEnter(ClientGameState::MainMenu), show_menu);
-
-        app.add_plugins(textbox::TextboxPlugin);
     }
 }
 
 #[derive(Component)]
 struct MainMenu;
-
-#[derive(Component)]
-#[require(Button)]
-pub struct ButtonEffect {
-    system: SystemId,
-}
-
-const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
-
-fn button_system(
-    mut commands: Commands,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &mut Text, &ButtonEffect),
-        (Changed<Interaction>, With<Button>),
-    >,
-) {
-    for (interaction, mut color, mut text, effect) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                **text = "Press".to_string();
-                *color = PRESSED_BUTTON.into();
-                commands.run_system(effect.system);
-            }
-            Interaction::Hovered => {
-                **text = "Hover".to_string();
-                *color = HOVERED_BUTTON.into();
-            }
-            Interaction::None => {
-                **text = "Button".to_string();
-                *color = NORMAL_BUTTON.into();
-            }
-        }
-    }
-}
 
 fn setup(
     mut commands: Commands,
@@ -77,8 +44,8 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                Button,
                 Textbox { focused: true },
+                BackgroundColor(textbox::FOCUSED_BOX),
                 Node {
                     width: Val::Px(150.0),
                     height: Val::Px(34.0),
@@ -86,7 +53,6 @@ fn setup(
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                BackgroundColor(NORMAL_BUTTON),
                 Text::new("127.0.0.1"),
                 TextFont {
                     font: asset_server.load("fonts/sans.ttf"),
@@ -108,7 +74,6 @@ fn setup(
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                BackgroundColor(NORMAL_BUTTON),
                 Text::new("Button"),
                 TextFont {
                     font: asset_server.load("fonts/sans.ttf"),

@@ -3,8 +3,10 @@ use lightyear::prelude::*;
 use server::ReplicateToClient;
 
 use crate::{
-    protocol::component::PlayerId,
-    protocol::message::{ChatChannel, ChatMessage},
+    protocol::{
+        component::PlayerId,
+        message::{ChatChannel, ChatMessage},
+    },
     shared::player::PlayerBundle,
 };
 

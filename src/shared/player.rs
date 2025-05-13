@@ -30,12 +30,20 @@ pub enum PlayerState {
     Aerial,
 }
 
+// NOTE required components do not seem to work perfectly
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[require(Transform)]
-// TODO required components can have default constructors :)
 pub struct Player {
     pub state: PlayerState,
     pub look_dir: Vec2,
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            state: PlayerState::Grounded,
+            look_dir: Vec2::default(),
+        }
+    }
 }
 
 // TODO this probably should be in update, to make camera movement smooth to framerate, but it breaks determinism

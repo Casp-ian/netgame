@@ -7,7 +7,7 @@ use crate::{
         REPLICATION_GROUP,
         component::{EnemyId, ProjectileId},
     },
-    shared::{enemy::EnemyBundle, projectile::Projectile},
+    shared::{enemy::EnemyBundle, projectile::ProjectileBundle},
 };
 
 #[derive(Resource)]
@@ -56,7 +56,7 @@ fn spawn_ball(
         replicate,
         ProjectileId { id: 0 },
         Transform::from_xyz(0.0, 5.0, 0.0),
-        Projectile::default(),
+        ProjectileBundle::default(),
         // NOTE could make gui feature
         // Mesh3d(meshes.add(Sphere::new(0.25))),
         // MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
