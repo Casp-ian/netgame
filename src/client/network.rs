@@ -33,19 +33,21 @@ const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED
 // oneshot
 pub fn connect(
     mut commands: Commands,
-    text: Query<&Text, With<Textbox>>,
+    ip_text: Query<&Text, With<super::menu::IpBox>>,
+    port_text: Query<&Text, With<super::menu::PortBox>>,
     mut client_config: ResMut<ClientConfig>,
     mut game_state: ResMut<NextState<ClientGameState>>,
 ) {
     // TODO text parsing, for port as well
-    let ip: Result<Ipv4Addr, _> = text.single().unwrap().0.clone().parse();
+    let ip: Result<Ipv4Addr, _> = ip_text.single().unwrap().0.clone().parse();
+    let port: u16 = port_text.single().unwrap().0.parse::<u16>().unwrap();
 
     if let Err(e) = ip {
         error!("{:?}", e);
         return;
     }
 
-    client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), 25565));
+    client_config.net = netconfig(SocketAddr::new(IpAddr::V4(ip.unwrap()), port));
 
     commands.connect_client();
     game_state.set(ClientGameState::Game);

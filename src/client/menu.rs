@@ -24,6 +24,13 @@ impl Plugin for MenuPlugin {
 #[derive(Component)]
 struct MainMenu;
 
+#[derive(Component)]
+pub struct NameBox;
+#[derive(Component)]
+pub struct IpBox;
+#[derive(Component)]
+pub struct PortBox;
+
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -44,8 +51,29 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                Textbox { focused: true },
-                BackgroundColor(textbox::FOCUSED_BOX),
+                NameBox,
+                Textbox::default(),
+                // BackgroundColor(textbox::FOCUSED_BOX),
+                Node {
+                    width: Val::Px(150.0),
+                    height: Val::Px(34.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                Text::new("steve"),
+                TextFont {
+                    font: asset_server.load("fonts/sans.ttf"),
+                    font_size: 33.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            ));
+
+            parent.spawn((
+                IpBox,
+                Textbox::default(),
+                // BackgroundColor(textbox::FOCUSED_BOX),
                 Node {
                     width: Val::Px(150.0),
                     height: Val::Px(34.0),
@@ -54,6 +82,26 @@ fn setup(
                     ..default()
                 },
                 Text::new("127.0.0.1"),
+                TextFont {
+                    font: asset_server.load("fonts/sans.ttf"),
+                    font_size: 33.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            ));
+
+            parent.spawn((
+                PortBox,
+                Textbox::default(),
+                // BackgroundColor(textbox::FOCUSED_BOX),
+                Node {
+                    width: Val::Px(150.0),
+                    height: Val::Px(34.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                Text::new("25565"),
                 TextFont {
                     font: asset_server.load("fonts/sans.ttf"),
                     font_size: 33.0,

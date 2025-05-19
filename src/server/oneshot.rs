@@ -34,7 +34,7 @@ impl FromWorld for ServerOneshotSystems {
 
         systems
             .list
-            .insert("kanye".into(), world.register_system(spawn_enemy));
+            .insert("png".into(), world.register_system(spawn_enemy));
 
         systems
             .list

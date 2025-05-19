@@ -88,7 +88,7 @@ fn add_enemy_mesh(
     for (entity, mesh, physics) in &character_query {
         let mut body = commands.entity(entity);
 
-        let image_handle: Handle<Image> = server.load("images/kanye.png");
+        let image_handle: Handle<Image> = server.load("images/enemy.png");
         let material_handle = materials.add(StandardMaterial {
             base_color_texture: Some(image_handle.clone()),
             alpha_mode: AlphaMode::Blend,
