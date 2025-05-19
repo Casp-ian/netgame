@@ -20,7 +20,7 @@ use crate::{
     shared::shared_config,
 };
 
-use super::{ClientGameState, menu::textbox::Textbox};
+use super::ClientGameState;
 
 pub struct ClientNetworkPlugin;
 impl Plugin for ClientNetworkPlugin {

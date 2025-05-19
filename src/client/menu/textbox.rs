@@ -37,16 +37,12 @@ impl Default for Textbox {
 }
 
 fn focus_textbox(
-    mut interaction_query: Query<
-        (&Interaction, &mut Textbox, &mut BackgroundColor, Entity),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&Interaction, &mut Textbox, &mut BackgroundColor, Entity)>,
 ) {
     let mut pressed: Option<Entity> = None;
     for (interaction, _, _, entity) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
-                info!("focusing {:?}", entity);
                 pressed = Some(entity);
             }
             _ => {}
