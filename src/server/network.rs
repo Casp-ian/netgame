@@ -20,8 +20,6 @@ impl Plugin for ServerNetworkPlugin {
     }
 }
 
-const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 25565);
-
 fn start(mut commands: Commands) {
     commands.start_server();
 }
@@ -33,10 +31,17 @@ pub fn stop(mut exit: EventWriter<AppExit>, mut commands: Commands) {
 }
 
 fn build_server_plugin() -> ServerPlugins {
+    let mut port: u16 = 25565;
+    if let Ok(port_string) = std::env::var("NETGAME_PORT") {
+        port = port_string.parse::<u16>().unwrap_or(25565);
+    }
+
+    let server_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
+
     // The IoConfig will specify the transport to use.
     let io = IoConfig {
         // the address specified here is the server_address, because we open a UDP socket on the server
-        transport: ServerTransport::UdpSocket(SERVER_ADDR),
+        transport: ServerTransport::UdpSocket(server_addr),
         ..default()
     };
     // The NetConfig specifies how we establish a connection with the server.
