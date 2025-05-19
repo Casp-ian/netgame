@@ -11,11 +11,11 @@ impl Plugin for EnemyPlugin {
         app.add_systems(
             FixedUpdate,
             (
-                enemy_tick,
                 // TODO does timer work well on server client??
                 // agro.run_if(on_timer(Duration::from_secs(5))),
-                agro,
-            ),
+                enemy_tick, agro, damage,
+            )
+                .chain(),
         );
     }
 }
@@ -48,7 +48,7 @@ fn enemy_tick(
     // a
     mut enemies: Query<(&Enemy, &Position, &mut LinearVelocity)>,
 ) {
-    let enemy_speed = 4.0;
+    let enemy_speed = 7.0;
 
     for (enemy, pos, mut velocity) in enemies.iter_mut() {
         let direction: Vec3 = enemy.goal_pos - pos.0;
@@ -61,11 +61,34 @@ fn agro(
     players: Query<&Position, With<Player>>,
     mut enemies: Query<(&Position, &mut Enemy)>,
 ) {
-    for (_, mut enemy) in enemies.iter_mut() {
-        let closest_player_pos = players.iter().next();
-        if let Some(player_pos) = closest_player_pos {
-            enemy.goal_pos = player_pos.0;
+    let mut closest_player_pos = Vec3::ZERO;
+    let mut closest_player_distance = f32::INFINITY;
+
+    for (enemy_pos, mut enemy) in enemies.iter_mut() {
+        for player_pos in players.iter() {
+            // a
+            let distance = enemy_pos.0.distance(player_pos.0);
+
+            if distance < closest_player_distance {
+                closest_player_pos = player_pos.0;
+                closest_player_distance = distance;
+            }
+        }
+
+        enemy.goal_pos = closest_player_pos;
+    }
+}
+
+fn damage(mut players: Query<(&Position, &mut Player)>, enemies: Query<&Position, With<Enemy>>) {
+    for enemy_pos in enemies.iter() {
+        for (player_pos, mut player) in players.iter_mut() {
+            // a
+            let distance = enemy_pos.0.distance(player_pos.0);
+
+            if distance < 1.0 {
+                info!("kill");
+                player.hp -= 1;
+            }
         }
     }
-    // a
 }

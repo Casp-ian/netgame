@@ -8,13 +8,14 @@ use crate::shared::{casting::Caster, enemy::Enemy, player::Player};
 
 pub fn register_components(app: &mut App) {
     // General positional
+    app.register_component::<Transform>(ChannelDirection::ServerToClient)
+        .add_prediction(ComponentSyncMode::Full);
+
     app.register_component::<Position>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Full);
-    // .add_correction_fn(|start, end, t| Position(start.lerp(**end, t)));
 
     app.register_component::<Rotation>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Full);
-    // .add_correction_fn(|start, end, t| Rotation(*start.slerp(*end, t)));
 
     app.register_component::<LinearVelocity>(ChannelDirection::ServerToClient)
         .add_prediction(ComponentSyncMode::Full);

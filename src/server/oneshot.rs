@@ -7,7 +7,10 @@ use crate::{
         REPLICATION_GROUP,
         component::{EnemyId, ProjectileId},
     },
-    shared::{enemy::EnemyBundle, projectile::ProjectileBundle},
+    shared::{
+        enemy::{Enemy, EnemyBundle},
+        projectile::ProjectileBundle,
+    },
 };
 
 #[derive(Resource)]
@@ -32,6 +35,10 @@ impl FromWorld for ServerOneshotSystems {
         systems
             .list
             .insert("kanye".into(), world.register_system(spawn_enemy));
+
+        systems
+            .list
+            .insert("kill".into(), world.register_system(kill_them_all));
 
         systems
     }
@@ -88,4 +95,10 @@ fn spawn_enemy(
         // Mesh3d(meshes.add(Sphere::new(0.25))),
         // MeshMaterial3d(materials.add(Color::srgb_u8(224, 144, 255))),
     ));
+}
+
+fn kill_them_all(mut commands: Commands, enemies: Query<Entity, With<Enemy>>) {
+    for entity in enemies.iter() {
+        commands.entity(entity).despawn();
+    }
 }

@@ -20,6 +20,7 @@ impl Plugin for PlayerPlugin {
             FixedUpdate,
             (look_player, float_player, move_player).chain(),
         )
+        .add_systems(FixedPostUpdate, die)
         .add_systems(Update, move_camera);
     }
 }
@@ -35,6 +36,7 @@ pub enum PlayerState {
 pub struct Player {
     pub state: PlayerState,
     pub look_dir: Vec2,
+    pub hp: i32,
 }
 
 impl Default for Player {
@@ -42,6 +44,21 @@ impl Default for Player {
         Self {
             state: PlayerState::Grounded,
             look_dir: Vec2::default(),
+            hp: 1,
+        }
+    }
+}
+
+fn die(mut qp: Query<(&mut Player, &mut Transform)>) {
+    for (mut player, mut pos) in qp.iter_mut() {
+        if player.hp <= 0 {
+            player.hp = 1;
+            *pos = Transform::from_xyz(0.0, 5.0, 0.0);
+        }
+
+        if Vec3::ZERO.distance(pos.translation) > 50.0 {
+            player.hp = 1;
+            *pos = Transform::from_xyz(0.0, 5.0, 0.0);
         }
     }
 }
@@ -170,11 +187,7 @@ pub struct PlayerBundle {
 impl Default for PlayerBundle {
     fn default() -> Self {
         Self {
-            player: Player {
-                state: PlayerState::Grounded,
-                look_dir: Vec2::default(),
-            },
-
+            player: Player::default(),
             caster: Caster::new(),
             rigid_body: RigidBody::Dynamic,
             restitution: Restitution::new(0.1),
