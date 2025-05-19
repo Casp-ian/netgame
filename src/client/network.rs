@@ -10,12 +10,15 @@ use lightyear::{
         plugin::ClientPlugins,
     },
     prelude::{
-        ClientDisconnectEvent, Key,
+        ClientConnectEvent, ClientDisconnectEvent, Key,
         client::{Authentication, ClientCommandsExt, ClientTransport, IoConfig, NetConfig},
     },
 };
 
-use crate::shared::shared_config;
+use crate::{
+    protocol::message::{RegisterChannel, RegisterMessage},
+    shared::shared_config,
+};
 
 use super::{ClientGameState, menu::textbox::Textbox};
 
@@ -24,7 +27,7 @@ impl Plugin for ClientNetworkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins(build_client_plugin());
 
-        app.add_systems(Update, disconnect);
+        app.add_systems(Update, (disconnect, register));
     }
 }
 
@@ -51,6 +54,20 @@ pub fn connect(
 
     commands.connect_client();
     game_state.set(ClientGameState::Game);
+}
+
+fn register(
+    name_text: Query<&Text, With<super::menu::NameBox>>,
+
+    mut connection_manager: ResMut<lightyear::prelude::client::ConnectionManager>,
+    mut connection_events: EventReader<ClientConnectEvent>,
+) {
+    for _ in connection_events.read() {
+        let name = name_text.single().unwrap().0.clone();
+        connection_manager
+            .send_message::<RegisterChannel, RegisterMessage>(&RegisterMessage { name })
+            .unwrap();
+    }
 }
 
 fn disconnect(

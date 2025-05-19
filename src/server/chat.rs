@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
 
-use crate::protocol::message::{ChatChannel, ChatMessage};
+use crate::protocol::{
+    component::PlayerId,
+    message::{ChatChannel, ChatMessage},
+};
 
 use super::oneshot::ServerOneshotSystems;
 
@@ -17,10 +20,20 @@ fn forward_chat(
     mut commands: Commands,
     mut connection_manager: ResMut<lightyear::prelude::server::ConnectionManager>,
     mut events: EventReader<FromClients<ChatMessage>>,
+
+    players: Query<&PlayerId>,
+
     systems: Res<ServerOneshotSystems>,
 ) {
     for event in events.read() {
         let text: &String = &event.message().text;
+
+        let name = players
+            .iter()
+            .find(|x| x.id == event.from)
+            .expect("sender is no longer in the game")
+            .name
+            .clone();
 
         // skip empty
         if text.len() == 0 {
@@ -51,7 +64,7 @@ fn forward_chat(
 
         do_chat(
             &mut connection_manager,
-            format!("{}: {}", event.from(), text).to_string(),
+            format!("{}: {}", name, text).to_string(),
             NetworkTarget::All,
         );
     }

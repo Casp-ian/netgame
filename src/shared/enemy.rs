@@ -86,7 +86,6 @@ fn damage(mut players: Query<(&Position, &mut Player)>, enemies: Query<&Position
             let distance = enemy_pos.0.distance(player_pos.0);
 
             if distance < 1.0 {
-                info!("kill");
                 player.hp -= 1;
             }
         }

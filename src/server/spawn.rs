@@ -5,7 +5,7 @@ use server::ReplicateToClient;
 use crate::{
     protocol::{
         component::PlayerId,
-        message::{ChatChannel, ChatMessage},
+        message::{ChatChannel, ChatMessage, RegisterMessage},
     },
     shared::player::PlayerBundle,
 };
@@ -22,13 +22,15 @@ impl Plugin for SpawnPlugin {
 
 fn handle_connections(
     mut connection_manager: ResMut<lightyear::prelude::server::ConnectionManager>,
-    mut connections: EventReader<ServerConnectEvent>,
+    // mut connections: EventReader<ServerConnectEvent>,
+    mut reader: EventReader<ServerReceiveMessage<RegisterMessage>>,
 
     mut commands: Commands,
 ) {
-    for connection in connections.read() {
+    for registration in reader.read() {
         // on the server, the `context()` method returns the `ClientId` of the client that connected
-        let client_id = connection.client_id;
+        let client_id = registration.from;
+        let name = registration.message.name.clone();
 
         // let replicate = ServerReplicate {
         //     group: REPLICATION_GROUP,
@@ -57,14 +59,17 @@ fn handle_connections(
         connection_manager
             .send_message_to_target::<ChatChannel, ChatMessage>(
                 &ChatMessage {
-                    text: "[Server]: New player joined".to_string(),
+                    text: format!("[Server]: New player '{}' joined", name),
                 },
                 NetworkTarget::All,
             )
             .unwrap();
 
         let player = (
-            PlayerId { id: client_id },
+            PlayerId {
+                id: client_id,
+                name,
+            },
             PlayerBundle {
                 ..Default::default()
             },

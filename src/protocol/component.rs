@@ -47,6 +47,7 @@ pub fn register_components(app: &mut App) {
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct PlayerId {
     pub id: ClientId,
+    pub name: String,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
